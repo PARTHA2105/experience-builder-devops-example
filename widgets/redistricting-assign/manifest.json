@@ -1,0 +1,22 @@
+{
+  "name": "redistricting-assign",
+  "label": "Redistricting Assign",
+  "type": "widget",
+  "version": "1.19.0",
+  "exbVersion": "1.19.0",
+  "author": "Parthasarathi",
+  "description": "Assign census blocks to districts",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 800,
+    "height": 500
+  }
+}
