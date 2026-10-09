@@ -1,1 +1,0 @@
-System.register([],function(t){return{execute:function(){t({verticalAlignment:"Alineaci\xf3 vertical",textContent:"Contingut de text"})}}});

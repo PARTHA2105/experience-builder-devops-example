@@ -1,1 +1,0 @@
-System.register([],function(t){return{execute:function(){t({verticalAlignment:"Vertikalus lygiavimas",textContent:"Teksto turinys"})}}});
