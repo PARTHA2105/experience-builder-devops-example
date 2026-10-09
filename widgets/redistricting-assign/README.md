@@ -14,7 +14,9 @@ Custom ArcGIS Experience Builder widget for creating and reviewing redistricting
   - `3`: plan assignments
   - `4`: plan activity log
 
-Feature Service permissions must allow the signed-in role to perform the reads and edits needed by its workflow. The role override in `src/runtime/authorization.ts` changes the development UI role only; it does not grant service permissions.
+The widget uses the signed-in ArcGIS Hub/portal account in Experience Builder. Authenticated community members can create scenarios; users whose ArcGIS account role is `org_admin` see the administrator/review interface. Explicit planner user IDs can also be configured in `src/runtime/authorization.ts`. The role override in that file changes the development UI role only; it does not grant Feature Service permissions.
+
+Feature Service permissions must allow the signed-in role to perform the reads and edits needed by its workflow. The widget uses the ArcGIS geometry union operator rather than the deprecated geometry engine module so it can run with the ArcGIS JavaScript API version used by Experience Builder Online.
 
 ## Install in Experience Builder Developer Edition
 

@@ -34,6 +34,17 @@ describe('ArcGIS user authorization', () => {
     expect(canCreateScenario(communityUser)).toBe(true)
   })
 
+  it('grants reviewer access to authenticated ArcGIS organization administrators', () => {
+    const administrator = { id: 'admin-789', username: 'hub-admin', role: 'org_admin' as const }
+    const registeredMember = { id: 'member-789', username: 'hub-member', role: 'org_user' as const }
+
+    expect(canReviewPlans(administrator)).toBe(true)
+    expect(isCommunityUser(administrator)).toBe(false)
+    expect(canReviewPlans(registeredMember)).toBe(false)
+    expect(isCommunityUser(registeredMember)).toBe(true)
+    expect(canReviewPlans({ ...administrator, username: 'anonymous' })).toBe(false)
+  })
+
   it('uses an explicit development role override only for authenticated users', () => {
     if (isDeveloperBuild && TEST_ROLE_OVERRIDE) {
       expect(canReviewPlans(communityUser)).toBe(TEST_ROLE_OVERRIDE === 'planner')

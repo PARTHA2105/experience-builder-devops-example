@@ -2,6 +2,7 @@ export interface ArcGISUserIdentity {
   id?: string
   username?: string
   fullName?: string
+  role?: 'org_admin' | 'org_publisher' | 'org_user'
 }
 
 export const isDeveloperBuild = process.env.NODE_ENV === 'development'
@@ -32,7 +33,7 @@ export function isSchoolSitePlanner(user: ArcGISUserIdentity | undefined, planne
   if (isAuthenticated(user) && isDeveloperBuild && TEST_ROLE_OVERRIDE) {
     return TEST_ROLE_OVERRIDE === 'planner'
   }
-  return isAuthenticated(user) && matches(arcgisUserId(user), plannerUserIds)
+  return isAuthenticated(user) && (user.role === 'org_admin' || matches(arcgisUserId(user), plannerUserIds))
 }
 
 export function isCommunityUser(user: ArcGISUserIdentity | undefined, plannerUserIds: string[] = []): boolean {
@@ -49,6 +50,6 @@ export function canCreateScenario(user: ArcGISUserIdentity | undefined): boolean
 
 export function roleLabelForUser(user: ArcGISUserIdentity | undefined, plannerUserIds: string[] = []): string {
   if (!isAuthenticated(user)) return 'Not signed in'
-  if (canReviewPlans(user, plannerUserIds)) return 'Planner/reviewer'
+  if (canReviewPlans(user, plannerUserIds)) return 'Administrator/reviewer'
   return 'Community user'
 }

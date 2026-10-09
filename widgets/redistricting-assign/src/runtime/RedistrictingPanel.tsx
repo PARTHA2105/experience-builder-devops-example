@@ -407,7 +407,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
     <div style={{ position: 'relative', padding: 12 }}>
       <div role="status" style={{ padding: '7px 9px', marginBottom: 10, borderRadius: 6, background: isPlanner ? '#eff6ff' : authenticated ? '#f0fdf4' : '#fff7ed', color: isPlanner ? '#1d4ed8' : authenticated ? '#166534' : '#9a3412', fontSize: 12 }}>
         {authenticated
-          ? <>Signed in as <strong>{currentUser?.username}</strong> · Access: <strong>{isPlanner ? 'Planner/reviewer' : 'Community member'}</strong></>
+          ? <>Signed in as <strong>{currentUser?.username}</strong> · Access: <strong>{isPlanner ? 'Administrator/reviewer' : 'Community member'}</strong></>
           : <>Access: <strong>{roleLabelForUser(currentUser)}</strong></>}
       </div>
       {!authenticated && (

@@ -5,7 +5,7 @@ import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer'
 import Graphic from '@arcgis/core/Graphic'
 import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol'
 import SketchViewModel from '@arcgis/core/widgets/Sketch/SketchViewModel'
-import * as geometryEngineAsync from '@arcgis/core/geometry/geometryEngineAsync'
+import * as unionOperator from '@arcgis/core/geometry/operators/unionOperator'
 import Polygon from '@arcgis/core/geometry/Polygon'
 
 import type { AssignmentState, PlanAssignmentRow, PlanDistrict, PlanMetrics } from './types'
@@ -295,8 +295,8 @@ export function useAssignmentTool({ view, baseLayer, overlayLayer, serviceUrl, p
         }
         if (!cancelled && geoms.length > 0) {
           try {
-            const unioned = geoms.length === 1 ? geoms[0] : await geometryEngineAsync.union(geoms as Polygon[])
-            await view.goTo({ target: unioned.extent.expand(1.3) })
+            const unioned = geoms.length === 1 ? geoms[0] : unionOperator.executeMany(geoms)
+            if (unioned) await view.goTo({ target: unioned.extent.expand(1.3) })
           } catch (err) { console.warn('Zoom to plan extent failed (non-fatal)', err) }
         }
       }
