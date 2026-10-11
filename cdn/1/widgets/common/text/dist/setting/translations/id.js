@@ -1,0 +1,1 @@
+System.register([],function(e){return{execute:function(){e({verticalAlignment:"Penyejajaran vertikal",textContent:"Konten teks"})}}});

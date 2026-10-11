@@ -1,0 +1,1 @@
+System.register([],function(t){return{execute:function(){t({verticalAlignment:"Verticale uitlijning",textContent:"Tekstcontent"})}}});

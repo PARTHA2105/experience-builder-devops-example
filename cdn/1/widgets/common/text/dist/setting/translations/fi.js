@@ -1,0 +1,1 @@
+System.register([],function(t){return{execute:function(){t({verticalAlignment:"Pystytasaus",textContent:"Tekstisis\xe4lt\xf6"})}}});

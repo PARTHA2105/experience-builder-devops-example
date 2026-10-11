@@ -1,0 +1,1 @@
+System.register([],function(t){return{execute:function(){t({verticalAlignment:"Okomito poravnavanje",textContent:"Tekstualni sadr\u017eaj"})}}});

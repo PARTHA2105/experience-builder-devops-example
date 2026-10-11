@@ -1,0 +1,1 @@
+System.register([],function(e){return{execute:function(){e({verticalAlignment:"Vertikal justering",textContent:"Textinneh\xe5ll"})}}});
