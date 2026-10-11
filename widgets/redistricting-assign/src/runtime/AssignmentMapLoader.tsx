@@ -13,7 +13,7 @@ import { clearAssignmentOverlaySources, getOrCreateAssignmentOverlay, replaceAss
 const { useEffect, useRef, useState } = React
 const NUMERIC_FIELD_TYPES = ['esriFieldTypeInteger', 'esriFieldTypeSmallInteger', 'esriFieldTypeDouble', 'esriFieldTypeSingle', 'esriFieldTypeOID', 'esriFieldTypeBigInteger']
 
-function geoidWhere(baseLayer: FeatureLayer, geoids: string[]): string {
+function geoidWhere(baseLayer: FeatureLayer, geoids: string[]): string  {
   const field = baseLayer.fields?.find((candidate) => candidate.name.toUpperCase() === 'GEOID20')
   const values = field && NUMERIC_FIELD_TYPES.includes(field.type)
     ? geoids.join(',')
