@@ -2,7 +2,7 @@
   "created": 1791439553174,
   "description": "",
   "id": "0",
-  "modified": 1791525212622,
+  "modified": 1791804819526,
   "owner": "partha_dev",
   "tags": [],
   "thumbnail": null,
@@ -15,7 +15,8 @@
     "JavaScript",
     "status: Published",
     "version:1.19.0",
-    "modified: 1791441917789"
+    "modified: 1791804815718",
+    "publishVersion:1.19.0"
   ],
   "portalUrl": "https://DDP.maps.arcgis.com",
   "username": "partha_dev",

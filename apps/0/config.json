@@ -84,12 +84,19 @@
           "widgetId": "widget_5",
           "bbox": {},
           "setting": {}
+        },
+        "1": {
+          "type": "WIDGET",
+          "widgetId": "widget_10",
+          "bbox": {},
+          "setting": {}
         }
       },
       "type": "FIXED",
       "label": "Controller layout",
       "order": [
-        "0"
+        "0",
+        "1"
       ]
     }
   },
@@ -248,6 +255,20 @@
       "useMapWidgetIds": [
         "widget_1"
       ]
+    },
+    "widget_10": {
+      "uri": "widgets/common/login/",
+      "version": "1.19.0",
+      "offPanel": true,
+      "label": "Login",
+      "config": {
+        "functionConfig": {
+          "loginOptions": {
+            "useAdvanceLogin": true
+          }
+        }
+      },
+      "id": "widget_10"
     }
   },
   "widgetsManifest": {},
@@ -258,7 +279,7 @@
   "attributes": {
     "portalUrl": "https://DDP.maps.arcgis.com"
   },
-  "timestamp": 1791441917627,
+  "timestamp": 1791804815612,
   "sharedThemeVariables": {
     "header": {
       "color": "#ebebeb"
@@ -285,5 +306,5 @@
       "page_0": []
     }
   ],
-  "publishTimestamp": 1791525212611
+  "publishTimestamp": 1791804819519
 }
