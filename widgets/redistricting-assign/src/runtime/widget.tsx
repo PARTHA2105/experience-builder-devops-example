@@ -6,16 +6,9 @@ import { resolveServiceUrl } from './PlanService'
 import { RedistrictingPanel } from './RedistrictingPanel'
 import { AssignmentMapLoader } from './AssignmentMapLoader'
 import { isAuthenticated } from './authorization'
+import { getPortalAuthParams } from './auth-portal'
 
 const { useState, useEffect } = React
-
-function getPortalAuthParams() {
-  const { portalUrl, clientId } = getAppStore().getState()
-  return {
-    desUrl: portalUrl,
-    ...(clientId ? { clientId } : {})
-  }
-}
 
 export default function Widget(props: AllWidgetProps<IMConfig>) {
   const overlayOnly = props.config.overlayOnly
@@ -94,29 +87,29 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
 
   const signIn = React.useCallback(() => {
     return runAccountAction(() => SessionManager.getInstance().signIn({
-      ...getPortalAuthParams(),
+      ...getPortalAuthParams(props.config.authPortalUrl, getAppStore().getState()),
       popup: true,
       forceLogin: true
     }), 'ArcGIS sign-in was not completed', setLoginPending)
-  }, [runAccountAction])
+  }, [props.config.authPortalUrl, runAccountAction])
 
   const switchAccount = React.useCallback(() => {
     return runAccountAction(() => SessionManager.getInstance().signIn({
-      ...getPortalAuthParams(),
+      ...getPortalAuthParams(props.config.authPortalUrl, getAppStore().getState()),
       popup: true,
       forceLogin: true
     }), 'ArcGIS account switch was not completed', setSwitchPending)
-  }, [runAccountAction])
+  }, [props.config.authPortalUrl, runAccountAction])
 
   const signOut = React.useCallback(() => {
     return runAccountAction(() => {
       SessionManager.getInstance().signOut({
-        ...getPortalAuthParams(),
+        ...getPortalAuthParams(props.config.authPortalUrl, getAppStore().getState()),
         redirectToSignOutPage: false
       })
       return Promise.resolve()
     }, 'ArcGIS sign-out was not completed', setSwitchPending)
-  }, [runAccountAction])
+  }, [props.config.authPortalUrl, runAccountAction])
 
   return (
   <div className="jimu-widget" aria-hidden={overlayOnly || undefined} style={overlayOnly
