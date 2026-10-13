@@ -8,7 +8,14 @@ import { AssignmentMapLoader } from './AssignmentMapLoader'
 import { isAuthenticated } from './authorization'
 
 const { useState, useEffect } = React
-const OAUTH_CLIENT_ID = 'egollo2RA0jUb4ou'
+
+function getPortalAuthParams() {
+  const { portalUrl, clientId } = getAppStore().getState()
+  return {
+    desUrl: portalUrl,
+    ...(clientId ? { clientId } : {})
+  }
+}
 
 export default function Widget(props: AllWidgetProps<IMConfig>) {
   const overlayOnly = props.config.overlayOnly
@@ -86,10 +93,8 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   }, [])
 
   const signIn = React.useCallback(() => {
-    const portalUrl = getAppStore().getState().portalUrl
     return runAccountAction(() => SessionManager.getInstance().signIn({
-      desUrl: portalUrl,
-      clientId: OAUTH_CLIENT_ID,
+      ...getPortalAuthParams(),
       popup: true,
       forceLogin: true
     }), 'ArcGIS sign-in was not completed', setLoginPending)
@@ -97,8 +102,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
 
   const switchAccount = React.useCallback(() => {
     return runAccountAction(() => SessionManager.getInstance().signIn({
-      desUrl: getAppStore().getState().portalUrl,
-      clientId: OAUTH_CLIENT_ID,
+      ...getPortalAuthParams(),
       popup: true,
       forceLogin: true
     }), 'ArcGIS account switch was not completed', setSwitchPending)
@@ -107,8 +111,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const signOut = React.useCallback(() => {
     return runAccountAction(() => {
       SessionManager.getInstance().signOut({
-        desUrl: getAppStore().getState().portalUrl,
-        clientId: OAUTH_CLIENT_ID,
+        ...getPortalAuthParams(),
         redirectToSignOutPage: false
       })
       return Promise.resolve()
