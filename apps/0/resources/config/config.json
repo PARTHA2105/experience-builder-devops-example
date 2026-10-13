@@ -303,7 +303,9 @@
       "version": "1.19.0",
       "label": "Redistricting Assign",
       "config": {
-        "exampleConfigProperty": "test"
+        "exampleConfigProperty": "test",
+        "oauthClientId": "egollo2RA0jUb4ou",
+        "authPortalUrl": "https://DDP.maps.arcgis.com"
       },
       "id": "widget_11",
       "useMapWidgetIds": [
