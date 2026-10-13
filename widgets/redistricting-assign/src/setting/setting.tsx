@@ -42,6 +42,16 @@ export default function Setting(props: AllWidgetSettingProps<IMConfig>) {
       <div style={{ marginTop: 4, color: '#6b7280', fontSize: 11 }}>
         Use your ArcGIS organization URL when sign-in should use a different portal, for example https://schoolsite.maps.arcgis.com.
       </div>
+      <label style={{ marginTop: 12, display: 'block' }}>OAuth client ID (required if the app does not provide one)</label>
+      <TextInput
+        style={{ width: '100%' }}
+        value={props.config.oauthClientId}
+        onChange={(e) => { props.onSettingChange({ id: props.id, config: props.config.set('oauthClientId', e.target.value) }) }}
+        placeholder="Client ID from your ArcGIS OAuth application"
+      />
+      <div style={{ marginTop: 4, color: '#6b7280', fontSize: 11 }}>
+        This is a public application ID, not a client secret. Register the deployed experience's OAuth callback URL in that ArcGIS application.
+      </div>
     </div>
   )
 }
