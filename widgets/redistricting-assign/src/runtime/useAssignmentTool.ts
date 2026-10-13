@@ -308,8 +308,10 @@ export function useAssignmentTool({ view, baseLayer, overlayLayer, serviceUrl, p
 
   useEffect(() => {
     const sketchLayer = new GraphicsLayer({ listMode: 'hide', title: 'Selection sketch (temporary)' })
+    const map = view.map
+    if (!map) return
     sketchLayerRef.current = sketchLayer
-    view.map.add(sketchLayer)
+    map.add(sketchLayer)
     const svm = new SketchViewModel({ view, layer: sketchLayer, updateOnGraphicClick: false })
     sketchVMRef.current = svm
     const handle = svm.on('create', async (event) => {
@@ -319,7 +321,7 @@ export function useAssignmentTool({ view, baseLayer, overlayLayer, serviceUrl, p
       await addFeaturesUnderGeometry(geometry)
       if (isSelectingRef.current && selectionModeRef.current !== 'point') startSketch(selectionModeRef.current)
     })
-    return () => { handle.remove(); svm.destroy(); view.map.remove(sketchLayer) }
+    return () => { handle.remove(); svm.destroy(); map.remove(sketchLayer) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view])
 

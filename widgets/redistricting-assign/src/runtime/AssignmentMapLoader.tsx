@@ -13,7 +13,7 @@ import { clearAssignmentOverlaySources, getOrCreateAssignmentOverlay, replaceAss
 const { useEffect, useRef, useState } = React
 const NUMERIC_FIELD_TYPES = ['esriFieldTypeInteger', 'esriFieldTypeSmallInteger', 'esriFieldTypeDouble', 'esriFieldTypeSingle', 'esriFieldTypeOID', 'esriFieldTypeBigInteger']
 
-function geoidWhere(baseLayer: FeatureLayer, geoids: string[]): string  {
+function geoidWhere(baseLayer: FeatureLayer, geoids: string[]): string {
   const field = baseLayer.fields?.find((candidate) => candidate.name.toUpperCase() === 'GEOID20')
   const values = field && NUMERIC_FIELD_TYPES.includes(field.type)
     ? geoids.join(',')
@@ -54,10 +54,17 @@ export function AssignmentMapLoader({ view, baseLayer, serviceUrl }: Props): nul
   }, [])
 
   useEffect(() => {
+    const map = view.map
+    if (!map) {
+      layerRef.current = undefined
+      setLayerReady(false)
+      return
+    }
     const graphicsLayer = getOrCreateAssignmentOverlay(view)
     layerRef.current = graphicsLayer
     setLayerReady(true)
-    const handle = view.map.layers.on('change', () => {
+    const handle = map.layers.on('change', () => {
+      if (view.map !== map) return
       const topLayer = getOrCreateAssignmentOverlay(view)
       layerRef.current = topLayer
     })

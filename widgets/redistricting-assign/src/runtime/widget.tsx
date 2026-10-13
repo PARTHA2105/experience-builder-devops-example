@@ -1,41 +1,147 @@
-import { React, type AllWidgetProps } from 'jimu-core'
+import { React, getAppStore, observeStore, SessionManager, type AllWidgetProps } from 'jimu-core'
 import { JimuMapViewComponent, type JimuMapView } from 'jimu-arcgis'
 import type FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import type { IMConfig } from '../config'
 import { resolveServiceUrl } from './PlanService'
 import { RedistrictingPanel } from './RedistrictingPanel'
 import { AssignmentMapLoader } from './AssignmentMapLoader'
+import { isAuthenticated } from './authorization'
 
 const { useState, useEffect } = React
+const OAUTH_CLIENT_ID = 'egollo2RA0jUb4ou'
 
 export default function Widget(props: AllWidgetProps<IMConfig>) {
   const overlayOnly = props.config.overlayOnly
   const [jimuMapView, setJimuMapView] = useState<JimuMapView>()
+  const [activeMap, setActiveMap] = useState<__esri.Map | null>(null)
   const [baseLayer, setBaseLayer] = useState<FeatureLayer>()
   const [serviceUrl, setServiceUrl] = useState<string>()
+  const [currentUser, setCurrentUser] = useState(() => getAppStore().getState().user)
+  const [loginError, setLoginError] = useState<string>()
+  const [loginPending, setLoginPending] = useState(false)
+  const [switchPending, setSwitchPending] = useState(false)
+  const accountActionInFlight = React.useRef(false)
+  const authenticated = isAuthenticated(currentUser)
+
+  useEffect(() => observeStore(() => {
+    setCurrentUser(getAppStore().getState().user)
+  }, ['user']), [])
+
+  useEffect(() => {
+    if (!authenticated) return
+    setLoginError(undefined)
+    setLoginPending(false)
+    setSwitchPending(false)
+    accountActionInFlight.current = false
+  }, [authenticated, currentUser?.id])
 
   useEffect(() => {
     if (!jimuMapView) return
+    const updateMap = (map: __esri.Map | null) => {
+      setActiveMap(map)
+      setBaseLayer(undefined)
+      setServiceUrl(undefined)
+    }
+    updateMap(jimuMapView.view.map ?? null)
+    const handle = jimuMapView.view.watch('map', (map) => {
+      updateMap(map ?? null)
+    })
+    return () => { handle.remove() }
+  }, [jimuMapView])
+
+  useEffect(() => {
+    if (!activeMap) return
     const titleHint = props.config.baseLayerTitle
-    const featureLayers = jimuMapView.view.map.allLayers.filter((l) => l.type === 'feature')
+    const featureLayers = activeMap.allLayers.filter((l) => l.type === 'feature')
     const match = (titleHint
       ? featureLayers.find((l) => l.title === titleHint)
       : featureLayers.find((l: any) => l.geometryType === 'polygon')) as FeatureLayer | undefined
     if (match) { setBaseLayer(match); setServiceUrl(resolveServiceUrl(match)) }
-  }, [jimuMapView, props.config.baseLayerTitle])
+  }, [activeMap, props.config.baseLayerTitle])
+
+  const runAccountAction = React.useCallback((action: () => Promise<unknown>, failureMessage: string, setPending: (pending: boolean) => void) => {
+    if (accountActionInFlight.current) return Promise.resolve()
+    accountActionInFlight.current = true
+    setPending(true)
+    setLoginError(undefined)
+    let request: Promise<unknown>
+    try {
+      request = action()
+    } catch (error) {
+      console.error(failureMessage, error)
+      setLoginError('Sign-in could not be started. Please try again.')
+      accountActionInFlight.current = false
+      setPending(false)
+      return Promise.resolve()
+    }
+    return request
+      .catch((error) => {
+        console.error(failureMessage, error)
+        setLoginError('Sign-in was not completed. Your current session is unchanged; try again when ready.')
+      })
+      .finally(() => {
+        accountActionInFlight.current = false
+        setPending(false)
+      })
+  }, [])
+
+  const signIn = React.useCallback(() => {
+    const portalUrl = getAppStore().getState().portalUrl
+    return runAccountAction(() => SessionManager.getInstance().signIn({
+      desUrl: portalUrl,
+      clientId: OAUTH_CLIENT_ID,
+      popup: true,
+      forceLogin: true
+    }), 'ArcGIS sign-in was not completed', setLoginPending)
+  }, [runAccountAction])
+
+  const switchAccount = React.useCallback(() => {
+    return runAccountAction(() => SessionManager.getInstance().signIn({
+      desUrl: getAppStore().getState().portalUrl,
+      clientId: OAUTH_CLIENT_ID,
+      popup: true,
+      forceLogin: true
+    }), 'ArcGIS account switch was not completed', setSwitchPending)
+  }, [runAccountAction])
+
+  const signOut = React.useCallback(() => {
+    return runAccountAction(() => {
+      SessionManager.getInstance().signOut({
+        desUrl: getAppStore().getState().portalUrl,
+        clientId: OAUTH_CLIENT_ID,
+        redirectToSignOutPage: false
+      })
+      return Promise.resolve()
+    }, 'ArcGIS sign-out was not completed', setSwitchPending)
+  }, [runAccountAction])
 
   return (
   <div className="jimu-widget" aria-hidden={overlayOnly || undefined} style={overlayOnly
     ? { position: 'absolute', left: 0, top: 0, width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }
     : { height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
     {props.useMapWidgetIds?.length === 1 && (
-      <JimuMapViewComponent useMapWidgetId={props.useMapWidgetIds[0]} onActiveViewChange={(jmv) => { if (jmv) setJimuMapView(jmv) }} />
+      <JimuMapViewComponent useMapWidgetId={props.useMapWidgetIds[0]} onActiveViewChange={(jmv) => {
+        setJimuMapView(jmv ?? undefined)
+        setActiveMap(jmv?.view?.map ?? null)
+        if (!jmv) {
+          setBaseLayer(undefined)
+          setServiceUrl(undefined)
+        }
+      }} />
     )}
-    {!baseLayer && !overlayOnly && <div style={{ padding: 16 }}>Waiting for the map's base layer to load…</div>}
-    {baseLayer && serviceUrl && jimuMapView && (
+    {loginError && !baseLayer && !overlayOnly && !authenticated && <div role="alert" style={{ padding: 10 }}>
+      {loginError}{' '}
+      <button type="button" onClick={() => { void signIn() }} disabled={loginPending}>
+        {loginPending ? 'Signing in…' : 'Try again'}
+      </button>
+    </div>}
+    {!baseLayer && !overlayOnly && <div role="status" style={{ padding: 16 }}>
+      {activeMap ? "Waiting for the map's base layer to load…" : 'Waiting for the map to reconnect…'}
+    </div>}
+    {activeMap && baseLayer && serviceUrl && jimuMapView && (
       <>
         <AssignmentMapLoader view={jimuMapView.view as __esri.MapView} baseLayer={baseLayer} serviceUrl={serviceUrl} />
-        {!overlayOnly && <RedistrictingPanel view={jimuMapView.view as __esri.MapView} baseLayer={baseLayer} serviceUrl={serviceUrl} config={props.config} />}
+        {!overlayOnly && <RedistrictingPanel view={jimuMapView.view as __esri.MapView} baseLayer={baseLayer} serviceUrl={serviceUrl} config={props.config} onSignIn={signIn} onSwitchAccount={switchAccount} onSignOut={signOut} isAccountActionPending={loginPending || switchPending} accountActionError={loginError} />}
       </>
     )}
   </div>

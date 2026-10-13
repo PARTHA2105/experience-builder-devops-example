@@ -16,16 +16,16 @@
     "layout_0": {
       "type": "FIXED",
       "content": {
-        "0": {
+        "2": {
           "type": "WIDGET",
-          "widgetId": "widget_1",
+          "widgetId": "widget_6",
           "bbox": {
-            "left": "0.0%",
-            "right": "0.0%",
-            "top": "0.0%",
-            "bottom": "0.0%",
-            "width": "100.0%",
-            "height": "100.0%"
+            "left": "0%",
+            "right": "0%",
+            "top": "0%",
+            "bottom": "0%",
+            "width": "100%",
+            "height": "100%"
           },
           "setting": {
             "autoProps": {
@@ -42,29 +42,30 @@
         }
       },
       "order": [
-        "0"
+        "2"
       ]
     },
-    "layout_1": {
+    "layout_3": {
       "content": {
         "0": {
           "type": "WIDGET",
-          "widgetId": "widget_3",
+          "widgetId": "widget_11",
           "bbox": {
-            "left": "0.9%",
-            "top": "23.9%",
-            "width": "8.2%",
-            "height": "13.5%",
-            "right": "NaNpx"
+            "left": "0%",
+            "right": "0%",
+            "top": "0%",
+            "bottom": "0%",
+            "width": "100%",
+            "height": "100%"
           },
           "setting": {
             "autoProps": {
-              "width": "AUTO",
-              "height": "AUTO",
+              "right": false,
               "left": false,
-              "right": true,
               "top": false,
-              "bottom": true
+              "bottom": false,
+              "height": "STRETCH",
+              "width": "STRETCH"
             },
             "vCenter": false,
             "hCenter": false
@@ -72,25 +73,48 @@
         }
       },
       "type": "FIXED",
-      "label": "Map FixedLayout",
+      "label": "First",
       "order": [
         "0"
       ]
     },
-    "layout_2": {
+    "layout_4": {
       "content": {
         "0": {
           "type": "WIDGET",
-          "widgetId": "widget_5",
-          "bbox": {},
-          "setting": {}
+          "widgetId": "widget_7",
+          "bbox": {
+            "left": "0%",
+            "right": "0%",
+            "top": "0%",
+            "bottom": "0%",
+            "width": "100%",
+            "height": "100%"
+          },
+          "setting": {
+            "autoProps": {
+              "left": false,
+              "right": false,
+              "top": false,
+              "bottom": false,
+              "height": "STRETCH",
+              "width": "STRETCH"
+            },
+            "vCenter": false,
+            "hCenter": false
+          }
         }
       },
       "type": "FIXED",
-      "label": "Controller layout",
+      "label": "Second",
       "order": [
         "0"
       ]
+    },
+    "layout_5": {
+      "content": {},
+      "type": "FIXED",
+      "label": "Map FixedLayout"
     }
   },
   "exbVersion": "1.19.0",
@@ -101,7 +125,81 @@
   },
   "template": "blankfullscreen",
   "widgets": {
-    "widget_1": {
+    "widget_6": {
+      "uri": "widgets/layout/sidebar/",
+      "version": "1.19.0",
+      "label": "Sidebar",
+      "config": {
+        "direction": "HORIZONTAL",
+        "collapseSide": "FIRST",
+        "overlay": false,
+        "size": "314px",
+        "divider": {
+          "visible": true,
+          "lineStyle": {
+            "type": "solid",
+            "color": "var(--sys-color-divider-primary)",
+            "width": "1px"
+          }
+        },
+        "resizable": true,
+        "toggleBtn": {
+          "visible": true,
+          "iconSource": 0,
+          "icon": "LEFT",
+          "offsetX": 15,
+          "offsetY": 0,
+          "position": "CENTER",
+          "iconSize": 14,
+          "width": 15,
+          "height": 60,
+          "border": {
+            "type": "solid",
+            "color": "var(--sys-color-divider-secondary)",
+            "width": "1px"
+          },
+          "color": {
+            "normal": {
+              "icon": {
+                "useTheme": false,
+                "color": "var(--sys-color-action-text)"
+              },
+              "bg": {
+                "useTheme": true,
+                "color": "var(--sys-color-action)"
+              }
+            },
+            "hover": {
+              "bg": {
+                "useTheme": true,
+                "color": "var(--sys-color-action-pressed)"
+              }
+            }
+          },
+          "expandStyle": {
+            "style": {
+              "borderRadius": "0 92px 92px 0"
+            }
+          },
+          "collapseStyle": {
+            "style": {
+              "borderRadius": "0 92px 92px 0"
+            }
+          }
+        },
+        "defaultState": 1
+      },
+      "id": "widget_6",
+      "layouts": {
+        "FIRST": {
+          "LARGE": "layout_3"
+        },
+        "SECOND": {
+          "LARGE": "layout_4"
+        }
+      }
+    },
+    "widget_7": {
       "uri": "widgets/arcgis/arcgis-map/",
       "version": "1.19.0",
       "label": "Map",
@@ -118,10 +216,10 @@
         "scaleRange": null,
         "customLODs": null
       },
-      "id": "widget_1",
+      "id": "widget_7",
       "layouts": {
         "MapFixedLayout": {
-          "LARGE": "layout_1"
+          "LARGE": "layout_5"
         }
       },
       "dataActions": {
@@ -198,55 +296,16 @@
         }
       ]
     },
-    "widget_3": {
-      "uri": "widgets/common/controller/",
-      "version": "1.19.0",
-      "offPanel": true,
-      "label": "Widget Controller",
-      "config": {
-        "behavior": {
-          "onlyOpenOne": true,
-          "openStarts": [],
-          "displayType": "STACK",
-          "vertical": true,
-          "size": {
-            "widget_5": {
-              "width": 518.7874994277954,
-              "height": 414.7875002486074
-            }
-          }
-        },
-        "appearance": {
-          "space": 10,
-          "advanced": false,
-          "card": {
-            "showLabel": false,
-            "labelGrowth": 0,
-            "avatar": {
-              "type": "primary",
-              "size": "default",
-              "shape": "circle"
-            }
-          }
-        }
-      },
-      "id": "widget_3",
-      "layouts": {
-        "controller": {
-          "LARGE": "layout_2"
-        }
-      }
-    },
-    "widget_5": {
+    "widget_11": {
       "uri": "widgets/redistricting-assign/",
       "version": "1.19.0",
       "label": "Redistricting Assign",
       "config": {
         "exampleConfigProperty": "test"
       },
-      "id": "widget_5",
+      "id": "widget_11",
       "useMapWidgetIds": [
-        "widget_1"
+        "widget_7"
       ]
     }
   },
@@ -258,7 +317,7 @@
   "attributes": {
     "portalUrl": "https://DDP.maps.arcgis.com"
   },
-  "timestamp": 1791812964041,
+  "timestamp": 1791875635454,
   "sharedThemeVariables": {
     "header": {
       "color": "#ebebeb"
@@ -285,5 +344,5 @@
       "page_0": []
     }
   ],
-  "publishTimestamp": 1791812983273
+  "publishTimestamp": 1791875730292
 }

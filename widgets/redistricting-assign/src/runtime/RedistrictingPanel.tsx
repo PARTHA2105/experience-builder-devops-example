@@ -10,7 +10,7 @@ import { ScenarioForm } from './ScenarioForm'
 import { PlanList } from './PlanList'
 import { Icons } from './Icons'
 import { NotificationPanel } from './NotificationPanel'
-import { arcgisUserId, canCreateScenario, canReviewPlans, isAuthenticated, isCommunityUser, roleLabelForUser } from './authorization'
+import { arcgisUserId, canCreateScenario, canReviewPlans, isAuthenticated, isCommunityUser } from './authorization'
 import { getOrCreateAssignmentOverlay } from './AssignmentOverlay'
 const { useState, useEffect, useRef, useCallback } = React
 
@@ -23,9 +23,14 @@ interface Props {
   baseLayer: FeatureLayer
   serviceUrl: string
   config: IMConfig
+  onSignIn: () => Promise<void>
+  onSwitchAccount: () => Promise<void>
+  onSignOut: () => Promise<void>
+  isAccountActionPending: boolean
+  accountActionError?: string
 }
 
-export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Props) {
+export function RedistrictingPanel({ view, baseLayer, serviceUrl, config, onSignIn, onSwitchAccount, onSignOut, isAccountActionPending, accountActionError }: Props) {
   const [currentUser, setCurrentUser] = useState(() => getAppStore().getState().user)
   const currentUserId = arcgisUserId(currentUser) ?? 'anonymous'
   const accessContextRef = useRef('')
@@ -47,6 +52,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
   const overlayLayerRef = useRef<GraphicsLayer | undefined>(undefined)
   const [overlayLayerReady, setOverlayLayerReady] = useState(false)
   const [plans, setPlans] = useState<Plan[]>([])
+  const [planLoadError, setPlanLoadError] = useState<string>()
   const [planSummaries, setPlanSummaries] = useState<Map<string, { assignedAreaCount: number; districtCount: number }>>(new Map())
   const [initialAssignments, setInitialAssignments] = useState<Map<string, AssignmentState>>(new Map())
   const [notifications, setNotifications] = useState<PlanNotification[]>([])
@@ -58,6 +64,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
   const [reviewComment, setReviewComment] = useState('')
   const [isReviewing, setIsReviewing] = useState(false)
   const [activeTab, setActiveTab] = useState<'plans' | 'notifications'>('plans')
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [planActivity, setPlanActivity] = useState<PlanActivity[]>([])
   const [districts, setDistricts] = useState<PlanDistrict[]>([])
   const [totalBlockCount, setTotalBlockCount] = useState(0)
@@ -87,10 +94,17 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
   }, [accessContext])
 
  useEffect(() => {
+  const map = view.map
+  if (!map) {
+    overlayLayerRef.current = undefined
+    setOverlayLayerReady(false)
+    return
+  }
   overlayLayerRef.current = getOrCreateAssignmentOverlay(view)
   setOverlayLayerReady(true)
 
-  const handle = view.map.layers.on('change', () => {
+  const handle = map.layers.on('change', () => {
+    if (view.map !== map) return
     const currentOverlay = overlayLayerRef.current
     const restored = getOrCreateAssignmentOverlay(view)
     if (restored !== currentOverlay) {
@@ -107,7 +121,19 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
   }
 }, [view])
 
-  useEffect(() => { baseLayer.queryFeatureCount().then(setTotalBlockCount) }, [baseLayer])
+  useEffect(() => {
+    let cancelled = false
+    baseLayer.queryFeatureCount()
+      .then((count) => {
+        if (!cancelled) setTotalBlockCount(count)
+      })
+      .catch((error) => {
+        if (cancelled) return
+        console.warn('Study-area feature count could not be loaded', error)
+        setOperationError('Map layer access is unavailable. Check the signed-in account and map permissions.')
+      })
+    return () => { cancelled = true }
+  }, [baseLayer])
 
   // Points 2, 3, 5: loads on mount, and again after every save/submit —
   // this is what makes previously assigned areas reappear automatically.
@@ -116,6 +142,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
     if (!authenticated) {
       setPlans([])
       setPlanSummaries(new Map())
+      setPlanLoadError(undefined)
       return
     }
     const p = await fetchPlansForUser(serviceUrl, currentUserId, currentUser?.username, effectiveUser)
@@ -129,6 +156,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
       return [plan.plan_id, { assignedAreaCount: assignments.size, districtCount: districtIds.size }] as const
     })
     setPlanSummaries(new Map(summaryEntries))
+    setPlanLoadError(undefined)
     window.dispatchEvent(new Event('redistricting:assignments-updated'))
   }, [serviceUrl, currentUserId, currentUser?.username, effectiveUser, authenticated])
 
@@ -158,6 +186,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
       console.warn('Saved assignment load failed', error)
       setPlans([])
       setPlanSummaries(new Map())
+      setPlanLoadError('Scenarios could not be loaded. Check the signed-in account and Feature Service permissions.')
     })
     return () => { cancelled = true }
   }, [refreshAllAssignments])
@@ -404,14 +433,71 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config }: Prop
 
   return (
     <div style={{ position: 'relative', padding: 12 }}>
-      <div role="status" style={{ padding: '7px 9px', marginBottom: 10, borderRadius: 6, background: isPlanner ? '#eff6ff' : authenticated ? '#f0fdf4' : '#fff7ed', color: isPlanner ? '#1d4ed8' : authenticated ? '#166534' : '#9a3412', fontSize: 12 }}>
-        {authenticated
-          ? <>Signed in as <strong>{currentUserName}</strong> · Access: <strong>{isPlanner ? 'Administrator/reviewer' : 'Community member'}</strong></>
-          : <>Access: <strong>{roleLabelForUser(currentUser)}</strong></>}
+      <div style={{ position: 'relative', marginBottom: 14 }}>
+        <button
+          type="button"
+          aria-label={authenticated ? `Account menu for ${currentUserName}` : 'Sign in to ArcGIS'}
+          aria-expanded={isAccountMenuOpen}
+          aria-controls="redistricting-account-menu"
+          onClick={() => {
+            if (!authenticated) {
+              void onSignIn()
+              return
+            }
+            setIsAccountMenuOpen((open) => !open)
+          }}
+          style={{ display: 'grid', width: '100%', gridTemplateColumns: '38px minmax(0, 1fr) 20px', alignItems: 'center', columnGap: 10, padding: '11px 12px', border: `1px solid ${authenticated ? '#bbebce' : '#f1d6a8'}`, borderRadius: 9, background: authenticated ? 'linear-gradient(120deg, #f2fbf5 0%, #ffffff 100%)' : 'linear-gradient(120deg, #fff8ed 0%, #ffffff 100%)', boxShadow: '0 1px 3px rgba(16,24,40,0.06)', textAlign: 'left', cursor: 'pointer' }}
+        >
+          <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: authenticated ? '#dcfce7' : '#ffedd5', color: authenticated ? '#15803d' : '#c2410c', fontSize: 15, fontWeight: 700 }}>
+            {authenticated ? currentUserName.charAt(0).toUpperCase() : '!'}
+          </span>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+            <strong style={{ color: '#1f2937', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {authenticated ? currentUserName : 'Sign in to ArcGIS'}
+            </strong>
+            <span style={{ color: authenticated ? '#15803d' : '#9a3412', fontSize: 11, lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {authenticated ? currentUser?.username?.trim() || (isPlanner ? 'Administrator / reviewer' : 'Community member') : 'Access your plans and tools'}
+            </span>
+          </span>
+          <span aria-hidden="true" style={{ color: '#64748b', fontSize: 13, textAlign: 'center' }}>{isAccountMenuOpen ? '▴' : '▾'}</span>
+        </button>
+        {isAccountMenuOpen && authenticated && (
+          <div id="redistricting-account-menu" aria-label="ArcGIS account actions" style={{ position: 'absolute', zIndex: 20, top: 'calc(100% + 6px)', left: 0, right: 0, padding: 12, border: '1px solid #dbe3ec', borderRadius: 9, background: '#fff', boxShadow: '0 8px 24px rgba(15,23,42,0.16)' }}>
+            <div style={{ padding: '2px 3px 10px', borderBottom: '1px solid #e5eaf0' }}>
+              <strong style={{ display: 'block', color: '#1f2937', fontSize: 12 }}>{currentUserName}</strong>
+              {currentUser?.username && <span style={{ display: 'block', marginTop: 3, color: '#64748b', fontSize: 11 }}>{currentUser.username}</span>}
+              <span style={{ display: 'block', marginTop: 4, color: '#15803d', fontSize: 10 }}>{isPlanner ? 'Administrator / reviewer' : 'Community member'}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 10 }}>
+              <button type="button" disabled={isAccountActionPending} onClick={() => { void onSwitchAccount() }} style={{ minHeight: 36, border: 0, borderRadius: 5, background: '#0878bd', color: '#fff', fontSize: 11, fontWeight: 600, cursor: isAccountActionPending ? 'wait' : 'pointer' }}>
+                {isAccountActionPending ? 'Please wait…' : 'Switch account'}
+              </button>
+              <button type="button" disabled={isAccountActionPending} onClick={() => { void onSignOut(); setIsAccountMenuOpen(false) }} style={{ minHeight: 36, border: '1px solid #cbd5e1', borderRadius: 5, background: '#fff', color: '#334155', fontSize: 11, fontWeight: 600, cursor: isAccountActionPending ? 'wait' : 'pointer' }}>
+                Sign out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-      {!authenticated && (
-        <div style={{ padding: 10, marginBottom: 10, background: '#fff7ed', color: '#9a3412', fontSize: 12 }}>
-          Sign in through the ArcGIS Hub page before creating or saving a scenario.
+      {isAccountActionPending && (
+        <div role="status" style={{ padding: '8px 10px', marginBottom: 12, borderRadius: 6, background: '#eff6ff', color: '#1d4ed8', fontSize: 11 }}>
+          Complete sign-in in the ArcGIS window. Your current session remains active until sign-in succeeds.
+        </div>
+      )}
+      {accountActionError && (
+        <div role="alert" style={{ padding: '9px 11px', marginBottom: 12, border: '1px solid #fecaca', borderRadius: 6, background: '#fef2f2', color: '#b42318', fontSize: 12 }}>
+          {accountActionError}
+        </div>
+      )}
+      {planLoadError && (
+        <div role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '9px 11px', marginBottom: 12, border: '1px solid #fecaca', borderRadius: 6, background: '#fef2f2', color: '#b42318', fontSize: 12 }}>
+          <span>{planLoadError}</span>
+          <button type="button" onClick={() => {
+            refreshAllAssignments().catch((error) => {
+              console.warn('Scenario retry failed', error)
+              setPlanLoadError('Scenarios are still unavailable. Verify the account and service permissions.')
+            })
+          }} style={{ flex: '0 0 auto' }}>Retry</button>
         </div>
       )}
       {authenticated && isCommunity && (
