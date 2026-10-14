@@ -1,12 +1,12 @@
 {
-  "created": 1791439553174,
+  "created": 1791912155484,
   "description": "",
-  "id": "0",
-  "modified": 1791876019640,
-  "owner": "partha_dev",
+  "id": "1",
+  "modified": 1791958916421,
+  "owner": "partha_hub",
   "tags": [],
   "thumbnail": null,
-  "title": "EquiTest",
+  "title": "EquiZone",
   "type": "Web Experience",
   "snippet": "",
   "typeKeywords": [
@@ -15,12 +15,11 @@
     "JavaScript",
     "status: Changed",
     "version:1.19.0",
-    "modified: 1791876019634",
-    "publishVersion:1.19.0"
+    "modified: 1791958916415"
   ],
   "portalUrl": "https://schoolsite.maps.arcgis.com",
-  "username": "partha_dev",
-  "name": "EquiTest",
+  "username": "partha_hub",
+  "name": "EquiZone",
   "isLocalApp": true,
   "url": null
 }

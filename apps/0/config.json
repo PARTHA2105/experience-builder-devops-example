@@ -16,9 +16,9 @@
     "layout_0": {
       "type": "FIXED",
       "content": {
-        "2": {
+        "0": {
           "type": "WIDGET",
-          "widgetId": "widget_6",
+          "widgetId": "widget_1",
           "bbox": {
             "left": "0%",
             "right": "0%",
@@ -42,14 +42,14 @@
         }
       },
       "order": [
-        "2"
+        "0"
       ]
     },
-    "layout_3": {
+    "layout_1": {
       "content": {
         "0": {
           "type": "WIDGET",
-          "widgetId": "widget_11",
+          "widgetId": "widget_2",
           "bbox": {
             "left": "0%",
             "right": "0%",
@@ -78,11 +78,11 @@
         "0"
       ]
     },
-    "layout_4": {
+    "layout_2": {
       "content": {
         "0": {
           "type": "WIDGET",
-          "widgetId": "widget_7",
+          "widgetId": "widget_3",
           "bbox": {
             "left": "0%",
             "right": "0%",
@@ -111,10 +111,67 @@
         "0"
       ]
     },
-    "layout_5": {
-      "content": {},
+    "layout_3": {
+      "content": {
+        "0": {
+          "type": "WIDGET",
+          "widgetId": "widget_5",
+          "bbox": {
+            "left": "1.1%",
+            "top": "22.0%",
+            "width": "6.4%",
+            "height": "24.5%",
+            "right": "667px",
+            "bottom": "301px"
+          },
+          "setting": {
+            "autoProps": {
+              "width": "AUTO",
+              "height": "AUTO",
+              "left": false,
+              "right": true,
+              "top": false,
+              "bottom": true
+            },
+            "vCenter": false,
+            "hCenter": false
+          }
+        }
+      },
       "type": "FIXED",
-      "label": "Map FixedLayout"
+      "label": "Map FixedLayout",
+      "order": [
+        "0"
+      ]
+    },
+    "layout_4": {
+      "content": {
+        "0": {
+          "type": "WIDGET",
+          "widgetId": "widget_6",
+          "bbox": {},
+          "setting": {}
+        },
+        "1": {
+          "type": "WIDGET",
+          "widgetId": "widget_7",
+          "bbox": {},
+          "setting": {}
+        },
+        "2": {
+          "type": "WIDGET",
+          "widgetId": "widget_8",
+          "bbox": {},
+          "setting": {}
+        }
+      },
+      "type": "FIXED",
+      "label": "Controller layout",
+      "order": [
+        "0",
+        "1",
+        "2"
+      ]
     }
   },
   "exbVersion": "1.19.0",
@@ -125,7 +182,7 @@
   },
   "template": "blankfullscreen",
   "widgets": {
-    "widget_6": {
+    "widget_1": {
       "uri": "widgets/layout/sidebar/",
       "version": "1.19.0",
       "label": "Sidebar",
@@ -133,7 +190,7 @@
         "direction": "HORIZONTAL",
         "collapseSide": "FIRST",
         "overlay": false,
-        "size": "314px",
+        "size": "300px",
         "divider": {
           "visible": true,
           "lineStyle": {
@@ -189,17 +246,26 @@
         },
         "defaultState": 1
       },
-      "id": "widget_6",
+      "id": "widget_1",
       "layouts": {
         "FIRST": {
-          "LARGE": "layout_3"
+          "LARGE": "layout_1"
         },
         "SECOND": {
-          "LARGE": "layout_4"
+          "LARGE": "layout_2"
         }
       }
     },
-    "widget_7": {
+    "widget_2": {
+      "uri": "widgets/redistricting-assign/",
+      "version": "1.19.0",
+      "label": "Redistricting Assign",
+      "config": {
+        "exampleConfigProperty": "test"
+      },
+      "id": "widget_2"
+    },
+    "widget_3": {
       "uri": "widgets/arcgis/arcgis-map/",
       "version": "1.19.0",
       "label": "Map",
@@ -210,16 +276,12 @@
           "canSearch": true,
           "canNavigation": true
         },
-        "isUseCustomMapState": false,
-        "initialMapDataSourceID": "dataSource_1",
-        "initialMapState": null,
-        "scaleRange": null,
-        "customLODs": null
+        "isUseCustomMapState": false
       },
-      "id": "widget_7",
+      "id": "widget_3",
       "layouts": {
         "MapFixedLayout": {
-          "LARGE": "layout_5"
+          "LARGE": "layout_3"
         }
       },
       "dataActions": {
@@ -288,27 +350,64 @@
             }
           }
         }
-      },
-      "useDataSources": [
-        {
-          "dataSourceId": "dataSource_1",
-          "mainDataSourceId": "dataSource_1"
-        }
-      ]
+      }
     },
-    "widget_11": {
-      "uri": "widgets/redistricting-assign/",
+    "widget_5": {
+      "uri": "widgets/common/controller/",
       "version": "1.19.0",
-      "label": "Redistricting Assign",
+      "offPanel": true,
+      "label": "Widget Controller",
       "config": {
-        "exampleConfigProperty": "test",
-        "oauthClientId": "6VTohUSSAPuITFl2",
-        "authPortalUrl": "https://schoolsite.maps.arcgis.com"
+        "behavior": {
+          "onlyOpenOne": true,
+          "openStarts": [],
+          "displayType": "STACK",
+          "vertical": true,
+          "size": {}
+        },
+        "appearance": {
+          "space": 10,
+          "advanced": false,
+          "card": {
+            "showLabel": false,
+            "labelGrowth": 0,
+            "avatar": {
+              "type": "primary",
+              "size": "default",
+              "shape": "circle"
+            }
+          }
+        }
       },
-      "id": "widget_11",
-      "useMapWidgetIds": [
-        "widget_7"
-      ]
+      "id": "widget_5",
+      "layouts": {
+        "controller": {
+          "LARGE": "layout_4"
+        }
+      }
+    },
+    "widget_6": {
+      "uri": "widgets/arcgis/basemap-gallery/",
+      "version": "1.19.0",
+      "label": "Basemap Gallery",
+      "config": {},
+      "id": "widget_6"
+    },
+    "widget_7": {
+      "uri": "widgets/arcgis/legend/",
+      "version": "1.19.0",
+      "label": "Legend",
+      "config": {},
+      "id": "widget_7"
+    },
+    "widget_8": {
+      "uri": "widgets/arcgis/map-layers/",
+      "version": "1.19.0",
+      "label": "Map Layers",
+      "config": {
+        "useMapWidget": true
+      },
+      "id": "widget_8"
     }
   },
   "widgetsManifest": {},
@@ -317,35 +416,16 @@
   "dialogs": {},
   "messageConfigs": {},
   "attributes": {
-    "portalUrl": "https://schoolsite.maps.arcgis.com",
-    "clientId": "6VTohUSSAPuITFl2"
+    "portalUrl": "https://schoolsite.maps.arcgis.com"
   },
-  "timestamp": 1791875635454,
-  "sharedThemeVariables": {
-    "header": {
-      "color": "#ebebeb"
-    },
-    "body": {},
-    "button": {},
-    "logo": {
-      "small": "https://ddp.maps.arcgis.com/sharing/rest/content/items/3573cd18fbb54f4f90b2ebd6ef82847d/data",
-      "link": "https://www.mgt.us/"
-    }
-  },
-  "mainLocale": "en",
-  "dataSources": {
-    "dataSource_1": {
-      "id": "dataSource_1",
-      "type": "WEB_MAP",
-      "sourceLabel": "EquiZone_Update",
-      "itemId": "21f25962b7a648208329a5b7af506607",
-      "portalUrl": "https://schoolsite.maps.arcgis.com"
-    }
-  },
+  "timestamp": 1791912353559,
+  "sharedThemeVariables": null,
+  "mainLocale": "en-us",
+  "dataSources": {},
   "pageStructure": [
     {
       "page_0": []
     }
   ],
-  "publishTimestamp": 1791875730292
+  "publishTimestamp": 1791913251127
 }
