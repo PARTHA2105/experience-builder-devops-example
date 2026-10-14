@@ -101,7 +101,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const signIn = React.useCallback(() => {
     const authParams = getPortalAuthParams(props.config.authPortalUrl, props.config.oauthClientId, getAppStore().getState())
     if (!authParams.clientId) {
-      setLoginError('ArcGIS sign-in needs an OAuth client ID. Add oauthClientId to this widget in the Experience app configuration, then redeploy.')
+      setLoginError('ArcGIS sign-in needs an OAuth client ID. Add it to the app configuration for this portal or enter it in this widget’s OAuth client ID setting, then redeploy.')
       return Promise.resolve()
     }
     return runAccountAction(() => SessionManager.getInstance().signIn({
@@ -114,7 +114,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const switchAccount = React.useCallback(() => {
     const authParams = getPortalAuthParams(props.config.authPortalUrl, props.config.oauthClientId, getAppStore().getState())
     if (!authParams.clientId) {
-      setLoginError('ArcGIS sign-in needs an OAuth client ID. Add oauthClientId to this widget in the Experience app configuration, then redeploy.')
+      setLoginError('ArcGIS sign-in needs an OAuth client ID. Add it to the app configuration for this portal or enter it in this widget’s OAuth client ID setting, then redeploy.')
       return Promise.resolve()
     }
     return runAccountAction(() => SessionManager.getInstance().switchAccount({

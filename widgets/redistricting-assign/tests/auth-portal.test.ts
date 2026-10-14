@@ -39,4 +39,45 @@ describe('getPortalAuthParams', () => {
       clientId: 'deployed-client-id'
     })
   })
+
+  it('uses the OAuth client ID from the app configuration attributes', () => {
+    expect(getPortalAuthParams(undefined, undefined, {
+      appConfig: {
+        attributes: {
+          portalUrl: 'https://www.arcgis.com',
+          clientId: 'app-config-client-id'
+        }
+      }
+    })).toEqual({
+      desUrl: 'https://www.arcgis.com',
+      clientId: 'app-config-client-id'
+    })
+  })
+
+  it('matches the configured portal against the app configuration portal', () => {
+    expect(getPortalAuthParams('https://WWW.ARCGIS.COM/', undefined, {
+      appConfig: {
+        attributes: {
+          portalUrl: 'https://www.arcgis.com',
+          clientId: 'app-config-client-id'
+        }
+      }
+    })).toEqual({
+      desUrl: 'https://WWW.ARCGIS.COM/',
+      clientId: 'app-config-client-id'
+    })
+  })
+
+  it('does not use the app configuration client ID for a different portal', () => {
+    expect(getPortalAuthParams('https://schoolsite.maps.arcgis.com', undefined, {
+      appConfig: {
+        attributes: {
+          portalUrl: 'https://www.arcgis.com',
+          clientId: 'app-config-client-id'
+        }
+      }
+    })).toEqual({
+      desUrl: 'https://schoolsite.maps.arcgis.com'
+    })
+  })
 })
