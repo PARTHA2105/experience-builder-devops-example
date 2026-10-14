@@ -302,8 +302,8 @@
       "label": "Redistricting Assign",
       "config": {
         "exampleConfigProperty": "test",
-        "oauthClientId": "egollo2RA0jUb4ou",
-        "authPortalUrl": "https://DDP.maps.arcgis.com"
+        "oauthClientId": "6VTohUSSAPuITFl2",
+        "authPortalUrl": "https://schoolsite.maps.arcgis.com"
       },
       "id": "widget_11",
       "useMapWidgetIds": [
@@ -317,9 +317,9 @@
   "dialogs": {},
   "messageConfigs": {},
   "attributes": {
-    "portalUrl": "https://DDP.maps.arcgis.com",
-    "isWebTier": false,
+    "portalUrl": "https://schoolsite.maps.arcgis.com",
     "clientId": "",
+    "isWebTier": false,
     "express": false,
     "title": "EquiTest",
     "description": "",
@@ -344,8 +344,8 @@
       "id": "dataSource_1",
       "type": "WEB_MAP",
       "sourceLabel": "EquiZone_Update",
-      "itemId": "30332e66cd184629b4ea9036f1735418",
-      "portalUrl": "https://DDP.maps.arcgis.com"
+      "itemId": "fd7597c8a7964da985d435538e9e3ccd",
+      "portalUrl": "https://schoolsite.maps.arcgis.com"
     }
   },
   "pageStructure": [
