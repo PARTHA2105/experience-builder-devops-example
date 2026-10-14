@@ -1,6 +1,15 @@
 import type FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import { resolvePlanTableLayers } from '../src/runtime/PlanService'
 
+jest.mock('@arcgis/core/layers/FeatureLayer', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}))
+jest.mock('@arcgis/core/Graphic', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}))
+
 function table(title: string): FeatureLayer {
   return { title } as FeatureLayer
 }

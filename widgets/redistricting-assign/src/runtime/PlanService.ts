@@ -28,15 +28,15 @@ function normalizeTableName(name: string | undefined): string {
 export function resolvePlanTableLayers(tables: FeatureLayer[]): PlanServiceSources | undefined {
   const namesByRole: Array<{ role: keyof PlanServiceSources; names: string[] }> = [
     { role: 'plans', names: ['plans'] },
-    { role: 'districts', names: ['plandistricts', 'districts'] },
-    { role: 'assignments', names: ['planassignments', 'assignments'] },
+    { role: 'districts', names: ['plandistricts', 'plandistrict', 'districts'] },
+    { role: 'assignments', names: ['planassignments', 'planassignment', 'assignments'] },
     { role: 'activityLog', names: ['planactivitylog', 'activitylog'] },
   ]
   const resolved = new Map<keyof PlanServiceSources, FeatureLayer>()
 
   for (const table of tables) {
     const tableName = normalizeTableName(table.title)
-    const match = namesByRole.find(({ names }) => names.some((name) => tableName === name || tableName.endsWith(name)))
+    const match = namesByRole.find(({ names }) => names.includes(tableName))
     if (!match) continue
     if (resolved.has(match.role)) {
       throw new Error(`More than one map table matches ${match.role}. Give each scenario table a unique title.`)
@@ -86,7 +86,8 @@ async function loadScenarioTable(source: PlanServiceSource, index: number, name:
   try {
     await target.load()
   } catch (error) {
-    throw new Error(`${name} table (service layer ${index}) could not be loaded: ${errorDetails(error)}`)
+    const sourceDescription = typeof source === 'string' ? ` (service layer ${index})` : ''
+    throw new Error(`${name} table${sourceDescription} could not be loaded: ${errorDetails(error)}`)
   }
   return target
 }
