@@ -70,7 +70,8 @@ jobs:
         working-directory: exb
 
       - name: Verify exported OAuth client configuration
-        run: node -e "const expected=require('./server/public/apps/0/config.json').attributes.clientId; const actual=require('./app/cdn/3/config.json').attributes.clientId; if (!expected || actual !== expected) throw new Error('Exported app OAuth client ID does not match apps/0/config.json'); console.log('Verified OAuth client ID:', actual)"
+        run: |
+          node -e "const source=require('./server/public/apps/0/config.json'); const actual=require('./app/cdn/3/config.json'); const widgetId=Object.keys(source.widgets).find(id=>source.widgets[id].label==='Redistricting Assign'); const expectedWidget=source.widgets[widgetId]; const actualWidget=actual.widgets[widgetId]; const checks=[['app client ID',source.attributes.clientId,actual.attributes.clientId],['app portal',source.attributes.portalUrl,actual.attributes.portalUrl],['web map item ID',source.dataSources.dataSource_1.itemId,actual.dataSources.dataSource_1.itemId],['map portal',source.dataSources.dataSource_1.portalUrl,actual.dataSources.dataSource_1.portalUrl],['widget OAuth client ID',expectedWidget.config.oauthClientId,actualWidget.config.oauthClientId],['widget auth portal',expectedWidget.config.authPortalUrl,actualWidget.config.authPortalUrl]]; for(const [name,expected,got] of checks){if(!expected||got!==expected)throw new Error('Exported '+name+' mismatch: expected '+expected+', got '+got)} console.log('Verified Schoolsite OAuth client, portal, and Web Map configuration')"
         working-directory: exb
 
       # Generate screenshot (optional)
