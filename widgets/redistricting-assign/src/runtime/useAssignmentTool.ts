@@ -9,7 +9,7 @@ import * as unionOperator from '@arcgis/core/geometry/operators/unionOperator'
 import Polygon from '@arcgis/core/geometry/Polygon'
 
 import type { AssignmentState, PlanAssignmentRow, PlanDistrict, PlanMetrics } from './types'
-import { fetchAssignments, commitPlan, districtNameForId, getAvailableDistricts, colorForDistrictId } from './PlanService'
+import { fetchAssignments, commitPlan, districtNameForId, getAvailableDistricts, colorForDistrictId, type PlanServiceSource } from './PlanService'
 import { colorForAssignmentId } from './AssignmentSymbols'
 import { isCurrentAssignmentOverlayUpdate, replaceAssignmentOverlayGraphics, startAssignmentOverlayUpdate } from './AssignmentOverlay'
 
@@ -45,7 +45,7 @@ interface Args {
   view: MapView
   baseLayer: FeatureLayer
   overlayLayer: GraphicsLayer | undefined
-  serviceUrl: string
+  serviceUrl: PlanServiceSource
   planId: string | undefined
   planObjectId: number | undefined
   districts: PlanDistrict[]

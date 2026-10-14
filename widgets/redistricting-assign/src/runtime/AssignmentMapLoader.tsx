@@ -7,7 +7,7 @@ import type MapView from '@arcgis/core/views/MapView'
 import type Polygon from '@arcgis/core/geometry/Polygon'
 import { arcgisUserId, canReviewPlans, isAuthenticated } from './authorization'
 import { colorForDistrictId } from './AssignmentSymbols'
-import { fetchAssignments, fetchMyPlans } from './PlanService'
+import { fetchAssignments, fetchMyPlans, type PlanServiceSource } from './PlanService'
 import { clearAssignmentOverlaySources, getOrCreateAssignmentOverlay, replaceAssignmentOverlayGraphics, startAssignmentOverlayUpdate } from './AssignmentOverlay'
 
 const { useEffect, useRef, useState } = React
@@ -29,7 +29,7 @@ function rgba(hex: string, alpha: number): [number, number, number, number] {
 interface Props {
   view: MapView
   baseLayer: FeatureLayer
-  serviceUrl: string
+  serviceUrl: PlanServiceSource
 }
 
 export function AssignmentMapLoader({ view, baseLayer, serviceUrl }: Props): null {

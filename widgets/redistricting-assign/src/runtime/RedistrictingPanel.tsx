@@ -4,7 +4,7 @@ import type MapView from '@arcgis/core/views/MapView'
 import type FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import type { IMConfig } from '../config'
 import type { AssignmentState, Plan, PlanActivity, PlanDistrict, PlanNotification } from './types'
-import { colorForDistrictId, verifyBaselinePlan, createDraftPlan, commitPlan, fetchPlansForUser, fetchAllAssignmentsForUser, fetchDistricts, fetchAssignments, fetchNotifications, fetchPlanActivity, reviewPlan, deleteScenario } from './PlanService'
+import { colorForDistrictId, verifyBaselinePlan, createDraftPlan, commitPlan, fetchPlansForUser, fetchAllAssignmentsForUser, fetchDistricts, fetchAssignments, fetchNotifications, fetchPlanActivity, reviewPlan, deleteScenario, type PlanServiceSource } from './PlanService'
 import { useAssignmentTool } from './useAssignmentTool'
 import { ScenarioForm } from './ScenarioForm'
 import { PlanList } from './PlanList'
@@ -12,16 +12,13 @@ import { Icons } from './Icons'
 import { NotificationPanel } from './NotificationPanel'
 import { arcgisUserId, canCreateScenario, canReviewPlans, isAuthenticated, isCommunityUser } from './authorization'
 import { getOrCreateAssignmentOverlay } from './AssignmentOverlay'
+import { errorDetails } from './error-details'
 const { useState, useEffect, useRef, useCallback } = React
-
-function errorDetails(error: unknown): string {
-  return error instanceof Error && error.message ? error.message : 'Unknown service error.'
-}
 
 interface Props {
   view: MapView
   baseLayer: FeatureLayer
-  serviceUrl: string
+  serviceUrl: PlanServiceSource
   config: IMConfig
   onSignIn: () => Promise<void>
   onSwitchAccount: () => Promise<void>
@@ -188,7 +185,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config, onSign
       console.warn('Saved assignment load failed', error)
       setPlans([])
       setPlanSummaries(new Map())
-      setPlanLoadError('Scenarios could not be loaded. Check the signed-in account and Feature Service permissions.')
+      setPlanLoadError(`Scenarios could not be loaded: ${errorDetails(error)} Check the signed-in account and Feature Service permissions.`)
     })
     return () => { cancelled = true }
   }, [refreshAllAssignments])
@@ -501,7 +498,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config, onSign
           <button type="button" onClick={() => {
             refreshAllAssignments().catch((error) => {
               console.warn('Scenario retry failed', error)
-              setPlanLoadError('Scenarios are still unavailable. Verify the account and service permissions.')
+              setPlanLoadError(`Scenarios are still unavailable: ${errorDetails(error)} Verify the account and service permissions.`)
             })
           }} style={{ flex: '0 0 auto' }}>Retry</button>
         </div>

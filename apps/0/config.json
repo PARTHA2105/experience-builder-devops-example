@@ -84,12 +84,12 @@
           "type": "WIDGET",
           "widgetId": "widget_3",
           "bbox": {
-            "left": "0%",
-            "right": "0%",
-            "top": "0%",
-            "bottom": "0%",
-            "width": "100%",
-            "height": "100%"
+            "left": "0.0%",
+            "right": "0.0%",
+            "top": "0.0%",
+            "bottom": "0.0%",
+            "width": "100.0%",
+            "height": "100.0%"
           },
           "setting": {
             "autoProps": {
@@ -115,14 +115,14 @@
       "content": {
         "0": {
           "type": "WIDGET",
-          "widgetId": "widget_5",
+          "widgetId": "widget_4",
           "bbox": {
-            "left": "1.1%",
-            "top": "22.0%",
-            "width": "6.4%",
-            "height": "24.5%",
-            "right": "667px",
-            "bottom": "301px"
+            "left": "0.6%",
+            "top": "20.5%",
+            "width": "9.6%",
+            "height": "27.7%",
+            "right": "NaNpx",
+            "bottom": "NaNpx"
           },
           "setting": {
             "autoProps": {
@@ -132,9 +132,7 @@
               "right": true,
               "top": false,
               "bottom": true
-            },
-            "vCenter": false,
-            "hCenter": false
+            }
           }
         }
       },
@@ -263,7 +261,10 @@
       "config": {
         "exampleConfigProperty": "test"
       },
-      "id": "widget_2"
+      "id": "widget_2",
+      "useMapWidgetIds": [
+        "widget_3"
+      ]
     },
     "widget_3": {
       "uri": "widgets/arcgis/arcgis-map/",
@@ -276,7 +277,11 @@
           "canSearch": true,
           "canNavigation": true
         },
-        "isUseCustomMapState": false
+        "isUseCustomMapState": false,
+        "initialMapDataSourceID": "dataSource_2",
+        "initialMapState": null,
+        "scaleRange": null,
+        "customLODs": null
       },
       "id": "widget_3",
       "layouts": {
@@ -350,9 +355,15 @@
             }
           }
         }
-      }
+      },
+      "useDataSources": [
+        {
+          "dataSourceId": "dataSource_2",
+          "mainDataSourceId": "dataSource_2"
+        }
+      ]
     },
-    "widget_5": {
+    "widget_4": {
       "uri": "widgets/common/controller/",
       "version": "1.19.0",
       "offPanel": true,
@@ -379,7 +390,7 @@
           }
         }
       },
-      "id": "widget_5",
+      "id": "widget_4",
       "layouts": {
         "controller": {
           "LARGE": "layout_4"
@@ -387,10 +398,12 @@
       }
     },
     "widget_6": {
-      "uri": "widgets/arcgis/basemap-gallery/",
+      "uri": "widgets/arcgis/map-layers/",
       "version": "1.19.0",
-      "label": "Basemap Gallery",
-      "config": {},
+      "label": "Map Layers",
+      "config": {
+        "useMapWidget": true
+      },
       "id": "widget_6"
     },
     "widget_7": {
@@ -401,12 +414,10 @@
       "id": "widget_7"
     },
     "widget_8": {
-      "uri": "widgets/arcgis/map-layers/",
+      "uri": "widgets/arcgis/basemap-gallery/",
       "version": "1.19.0",
-      "label": "Map Layers",
-      "config": {
-        "useMapWidget": true
-      },
+      "label": "Basemap Gallery",
+      "config": {},
       "id": "widget_8"
     }
   },
@@ -418,14 +429,29 @@
   "attributes": {
     "portalUrl": "https://schoolsite.maps.arcgis.com"
   },
-  "timestamp": 1791912353559,
+  "timestamp": 1791973434678,
   "sharedThemeVariables": null,
   "mainLocale": "en-us",
-  "dataSources": {},
+  "dataSources": {
+    "dataSource_1": {
+      "id": "dataSource_1",
+      "type": "WEB_MAP",
+      "sourceLabel": "EquiZone",
+      "itemId": "21f25962b7a648208329a5b7af506607",
+      "portalUrl": "https://schoolsite.maps.arcgis.com"
+    },
+    "dataSource_2": {
+      "id": "dataSource_2",
+      "type": "WEB_MAP",
+      "sourceLabel": "EquiZoneWebMap",
+      "itemId": "414d850ab1da4468ac7661567a71ae90",
+      "portalUrl": "https://schoolsite.maps.arcgis.com"
+    }
+  },
   "pageStructure": [
     {
       "page_0": []
     }
   ],
-  "publishTimestamp": 1791913251127
+  "publishTimestamp": 1791973435656
 }

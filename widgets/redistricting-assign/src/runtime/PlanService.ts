@@ -3,15 +3,92 @@ import Graphic from '@arcgis/core/Graphic'
 import type { AssignmentState, MergedAssignment, Plan, PlanActivity, PlanAssignmentRow, PlanDistrict, PlanNotification } from './types'
 import { canReviewPlans, isAuthenticated, type ArcGISUserIdentity } from './authorization'
 import { colorForDistrictId as generateDistrictColor } from './AssignmentSymbols'
+import { errorDetails } from './error-details'
 
 export const LAYER_INDEX = { BASE: 0, PLANS: 1, DISTRICTS: 2, ASSIGNMENTS: 3, ACTIVITY_LOG: 4 } as const
 const EDIT_BATCH_SIZE = 200
 
+export interface PlanServiceSources {
+  plans: FeatureLayer
+  districts: FeatureLayer
+  assignments: FeatureLayer
+  activityLog: FeatureLayer
+}
+
+export type PlanServiceSource = string | PlanServiceSources
+
 export function resolveServiceUrl(baseLayer: FeatureLayer): string {
   return baseLayer.url.replace(/\/\d+\/?$/, '')
 }
-function layer(serviceUrl: string, index: number): FeatureLayer {
-  return new FeatureLayer({ url: `${serviceUrl}/${index}` })
+
+function normalizeTableName(name: string | undefined): string {
+  return (name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+export function resolvePlanTableLayers(tables: FeatureLayer[]): PlanServiceSources | undefined {
+  const namesByRole: Array<{ role: keyof PlanServiceSources; names: string[] }> = [
+    { role: 'plans', names: ['plans'] },
+    { role: 'districts', names: ['plandistricts', 'districts'] },
+    { role: 'assignments', names: ['planassignments', 'assignments'] },
+    { role: 'activityLog', names: ['planactivitylog', 'activitylog'] },
+  ]
+  const resolved = new Map<keyof PlanServiceSources, FeatureLayer>()
+
+  for (const table of tables) {
+    const tableName = normalizeTableName(table.title)
+    const match = namesByRole.find(({ names }) => names.some((name) => tableName === name || tableName.endsWith(name)))
+    if (!match) continue
+    if (resolved.has(match.role)) {
+      throw new Error(`More than one map table matches ${match.role}. Give each scenario table a unique title.`)
+    }
+    resolved.set(match.role, table)
+  }
+
+  if (resolved.size === 0) return undefined
+
+  const missing = namesByRole.filter(({ role }) => !resolved.has(role)).map(({ role }) => role)
+  if (missing.length > 0) {
+    throw new Error(`The map is missing required scenario tables: ${missing.join(', ')}.`)
+  }
+
+  const requiredTable = (role: keyof PlanServiceSources): FeatureLayer => {
+    const table = resolved.get(role)
+    if (!table) throw new Error(`The ${role} scenario table could not be resolved.`)
+    return table
+  }
+
+  return {
+    plans: requiredTable('plans'),
+    districts: requiredTable('districts'),
+    assignments: requiredTable('assignments'),
+    activityLog: requiredTable('activityLog'),
+  }
+}
+
+export function resolvePlanServiceSource(map: __esri.Map, baseLayer: FeatureLayer): PlanServiceSource {
+  const mapTables = map.tables.toArray().filter((table) => table.type === 'feature') as FeatureLayer[]
+  return resolvePlanTableLayers(mapTables) ?? resolveServiceUrl(baseLayer)
+}
+
+function layer(source: PlanServiceSource, index: number): FeatureLayer {
+  if (typeof source === 'string') return new FeatureLayer({ url: `${source}/${index}` })
+  switch (index) {
+    case LAYER_INDEX.PLANS: return source.plans
+    case LAYER_INDEX.DISTRICTS: return source.districts
+    case LAYER_INDEX.ASSIGNMENTS: return source.assignments
+    case LAYER_INDEX.ACTIVITY_LOG: return source.activityLog
+    default: throw new Error(`Unsupported scenario table index: ${index}.`)
+  }
+}
+
+async function loadScenarioTable(source: PlanServiceSource, index: number, name: string): Promise<FeatureLayer> {
+  const target = layer(source, index)
+  try {
+    await target.load()
+  } catch (error) {
+    throw new Error(`${name} table (service layer ${index}) could not be loaded: ${errorDetails(error)}`)
+  }
+  return target
 }
 
 async function queryAllFeatures(target: FeatureLayer, query: __esri.QueryProperties): Promise<__esri.Graphic[]> {
@@ -45,8 +122,8 @@ function assertEditsSucceeded(response: FeatureEditsResponse, operation: string)
   if (failedResult) throw new Error(`${operation} failed: ${failedResult.error?.message ?? 'Feature Service rejected an edit.'}`)
 }
 
-async function planIdExists(serviceUrl: string, planId: string): Promise<boolean> {
-  const result = await layer(serviceUrl, LAYER_INDEX.PLANS).queryFeatures({
+async function planIdExists(source: PlanServiceSource, planId: string): Promise<boolean> {
+  const result = await layer(source, LAYER_INDEX.PLANS).queryFeatures({
     where: `plan_id = ${sqlString(planId)}`,
     outFields: ['plan_id'],
     returnGeometry: false,
@@ -59,7 +136,7 @@ export function getAvailableDistricts(): Array<{ district_id: number; district_n
 }
 
 export async function createDraftPlan(
-  serviceUrl: string,
+  serviceUrl: PlanServiceSource,
   ownerUserId: string,
   ownerUsername: string,
   ownerDisplayName: string,
@@ -67,9 +144,14 @@ export async function createDraftPlan(
 ): Promise<{ plan: Plan; districts: PlanDistrict[] }> {
   if (!ownerUserId.trim() || !ownerUsername.trim()) throw new Error('A signed-in ArcGIS user is required to create a scenario.')
 
+  const [plansTable, districtsTable, activityTable] = await Promise.all([
+    loadScenarioTable(serviceUrl, LAYER_INDEX.PLANS, 'Plans'),
+    loadScenarioTable(serviceUrl, LAYER_INDEX.DISTRICTS, 'Plan districts'),
+    loadScenarioTable(serviceUrl, LAYER_INDEX.ACTIVITY_LOG, 'Activity log'),
+  ])
   const planId = crypto.randomUUID()
   const now = Date.now()
-  const result = await layer(serviceUrl, LAYER_INDEX.PLANS).applyEdits({
+  const result = await plansTable.applyEdits({
     addFeatures: [new Graphic({ attributes: {
       plan_id: planId,
       plan_name: 'Untitled scenario',
@@ -96,7 +178,7 @@ export async function createDraftPlan(
     district_color: colorForDistrictId(district.district_id),
     isPersisted: true,
   }))
-  const districtResult = await layer(serviceUrl, LAYER_INDEX.DISTRICTS).applyEdits({
+  const districtResult = await districtsTable.applyEdits({
     addFeatures: districts.map((district) => new Graphic({ attributes: {
       plan_district_id: district.plan_district_id,
       plan_id: district.plan_id,
@@ -106,7 +188,7 @@ export async function createDraftPlan(
     }})),
   })
   assertEditsSucceeded(districtResult, 'Scenario district creation')
-  const activityResult = await layer(serviceUrl, LAYER_INDEX.ACTIVITY_LOG).applyEdits({
+  const activityResult = await activityTable.applyEdits({
     addFeatures: [new Graphic({ attributes: {
       activity_id: crypto.randomUUID(),
       plan_id: planId,
@@ -137,7 +219,7 @@ export async function createDraftPlan(
   }
 }
 
-export async function verifyBaselinePlan(serviceUrl: string, baselinePlanId: string): Promise<void> {
+export async function verifyBaselinePlan(serviceUrl: PlanServiceSource, baselinePlanId: string): Promise<void> {
   const existing = await layer(serviceUrl, LAYER_INDEX.PLANS).queryFeatures({
     where: `plan_id = ${sqlString(baselinePlanId)}`,
     outFields: ['plan_id'],
@@ -160,7 +242,7 @@ export function colorForDistrictId(districtId: number): string {
   return generateDistrictColor(districtId)
 }
 
-export async function fetchMyPlans(serviceUrl: string, ownerUserId: string, legacyUsername?: string): Promise<Plan[]> {
+export async function fetchMyPlans(serviceUrl: PlanServiceSource, ownerUserId: string, legacyUsername?: string): Promise<Plan[]> {
   const ownerIds = Array.from(new Set([ownerUserId, legacyUsername].filter((value): value is string => Boolean(value?.trim()))))
   if (ownerIds.length === 0) return []
   const features = await queryAllFeatures(layer(serviceUrl, LAYER_INDEX.PLANS), {
@@ -177,7 +259,7 @@ export async function fetchMyPlans(serviceUrl: string, ownerUserId: string, lega
   return Array.from(plansById.values()).sort((a, b) => (b.last_updated_date ?? 0) - (a.last_updated_date ?? 0))
 }
 
-export async function fetchPlansForReview(serviceUrl: string): Promise<Plan[]> {
+export async function fetchPlansForReview(serviceUrl: PlanServiceSource): Promise<Plan[]> {
   const features = await queryAllFeatures(layer(serviceUrl, LAYER_INDEX.PLANS), {
     where: "status IN ('Submitted', 'Under Review')",
     outFields: ['*'],
@@ -190,7 +272,7 @@ export async function fetchPlansForReview(serviceUrl: string): Promise<Plan[]> {
 }
 
 export async function fetchPlansForUser(
-  serviceUrl: string,
+  serviceUrl: PlanServiceSource,
   ownerUserId: string,
   ownerUsername: string | undefined,
   reviewer: ArcGISUserIdentity | undefined,
@@ -204,7 +286,7 @@ export async function fetchPlansForUser(
     .sort((a, b) => (b.submitted_date ?? 0) - (a.submitted_date ?? 0))
 }
 
-export async function fetchNotifications(serviceUrl: string, ownerUserId: string, legacyUsername?: string): Promise<PlanNotification[]> {
+export async function fetchNotifications(serviceUrl: PlanServiceSource, ownerUserId: string, legacyUsername?: string): Promise<PlanNotification[]> {
   const plans = await fetchMyPlans(serviceUrl, ownerUserId, legacyUsername)
   const notifications: PlanNotification[] = []
   for (const plan of plans) {
@@ -247,7 +329,7 @@ export async function fetchNotifications(serviceUrl: string, ownerUserId: string
   return notifications.sort((a, b) => b.activityDate - a.activityDate)
 }
 
-export async function fetchDistricts(serviceUrl: string, planId: string): Promise<PlanDistrict[]> {
+export async function fetchDistricts(serviceUrl: PlanServiceSource, planId: string): Promise<PlanDistrict[]> {
   const features = await queryAllFeatures(layer(serviceUrl, LAYER_INDEX.DISTRICTS), {
     where: `plan_id = ${sqlString(planId)}`,
     outFields: ['*'],
@@ -260,7 +342,7 @@ export async function fetchDistricts(serviceUrl: string, planId: string): Promis
   }))
 }
 
-export async function fetchAssignments(serviceUrl: string, planId: string): Promise<Map<string, PlanAssignmentRow>> {
+export async function fetchAssignments(serviceUrl: PlanServiceSource, planId: string): Promise<Map<string, PlanAssignmentRow>> {
   const features = await queryAllFeatures(layer(serviceUrl, LAYER_INDEX.ASSIGNMENTS), {
     where: `plan_id = ${sqlString(planId)}`,
     outFields: ['*'],
@@ -276,7 +358,7 @@ export async function fetchAssignments(serviceUrl: string, planId: string): Prom
   return byGeoid
 }
 
-export async function fetchPlanActivity(serviceUrl: string, planId: string): Promise<PlanActivity[]> {
+export async function fetchPlanActivity(serviceUrl: PlanServiceSource, planId: string): Promise<PlanActivity[]> {
   const features = await queryAllFeatures(layer(serviceUrl, LAYER_INDEX.ACTIVITY_LOG), {
     where: `plan_id = ${sqlString(planId)}`,
     outFields: ['*'],
@@ -293,7 +375,7 @@ export async function fetchPlanActivity(serviceUrl: string, planId: string): Pro
 }
 
 export async function deleteScenario(
-  serviceUrl: string,
+  serviceUrl: PlanServiceSource,
   plan: Plan,
   ownerUserId: string,
   ownerAliases: string[] = [],
@@ -348,7 +430,7 @@ export async function deleteScenario(
 }
 
 export async function reviewPlan(
-  serviceUrl: string,
+  serviceUrl: PlanServiceSource,
   plan: Plan,
   reviewer: ArcGISUserIdentity | undefined,
   status: 'Approved' | 'Rejected',
@@ -391,7 +473,7 @@ export async function reviewPlan(
 // see the comment in useAssignmentTool's merge effect for the alternative
 // if you'd rather the currently open plan always win instead.
 export async function fetchAllAssignmentsForUser(
-  serviceUrl: string,
+  serviceUrl: PlanServiceSource,
   ownerUserId: string,
   plans?: Plan[],
 ): Promise<{ plans: Plan[]; merged: Map<string, MergedAssignment>; assignmentsByPlan: Map<string, Map<string, PlanAssignmentRow>> }> {
@@ -417,7 +499,7 @@ export async function fetchAllAssignmentsForUser(
 }
 
 interface CommitArgs {
-  serviceUrl: string
+  serviceUrl: PlanServiceSource
   existingPlanId: string | undefined
   existingPlanObjectId: number | undefined
   planName: string

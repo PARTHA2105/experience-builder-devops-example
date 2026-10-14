@@ -115,14 +115,14 @@
       "content": {
         "0": {
           "type": "WIDGET",
-          "widgetId": "widget_5",
+          "widgetId": "widget_4",
           "bbox": {
-            "left": "1.1%",
-            "top": "22.0%",
-            "width": "6.4%",
-            "height": "24.5%",
-            "right": "667px",
-            "bottom": "301px"
+            "left": "0.6%",
+            "top": "20.5%",
+            "width": "9.6%",
+            "height": "27.7%",
+            "right": "NaNpx",
+            "bottom": "NaNpx"
           },
           "setting": {
             "autoProps": {
@@ -132,9 +132,7 @@
               "right": true,
               "top": false,
               "bottom": true
-            },
-            "vCenter": false,
-            "hCenter": false
+            }
           }
         }
       },
@@ -280,8 +278,8 @@
           "canNavigation": true
         },
         "isUseCustomMapState": false,
+        "initialMapDataSourceID": "dataSource_2",
         "initialMapState": null,
-        "initialMapDataSourceID": "dataSource_1",
         "scaleRange": null,
         "customLODs": null
       },
@@ -360,12 +358,12 @@
       },
       "useDataSources": [
         {
-          "dataSourceId": "dataSource_1",
-          "mainDataSourceId": "dataSource_1"
+          "dataSourceId": "dataSource_2",
+          "mainDataSourceId": "dataSource_2"
         }
       ]
     },
-    "widget_5": {
+    "widget_4": {
       "uri": "widgets/common/controller/",
       "version": "1.19.0",
       "offPanel": true,
@@ -392,7 +390,7 @@
           }
         }
       },
-      "id": "widget_5",
+      "id": "widget_4",
       "layouts": {
         "controller": {
           "LARGE": "layout_4"
@@ -400,14 +398,13 @@
       }
     },
     "widget_6": {
-      "uri": "widgets/arcgis/basemap-gallery/",
+      "uri": "widgets/arcgis/map-layers/",
       "version": "1.19.0",
-      "label": "Basemap Gallery",
-      "config": {},
-      "id": "widget_6",
-      "useMapWidgetIds": [
-        "widget_3"
-      ]
+      "label": "Map Layers",
+      "config": {
+        "useMapWidget": true
+      },
+      "id": "widget_6"
     },
     "widget_7": {
       "uri": "widgets/arcgis/legend/",
@@ -417,12 +414,10 @@
       "id": "widget_7"
     },
     "widget_8": {
-      "uri": "widgets/arcgis/map-layers/",
+      "uri": "widgets/arcgis/basemap-gallery/",
       "version": "1.19.0",
-      "label": "Map Layers",
-      "config": {
-        "useMapWidget": true
-      },
+      "label": "Basemap Gallery",
+      "config": {},
       "id": "widget_8"
     }
   },
@@ -434,7 +429,7 @@
   "attributes": {
     "portalUrl": "https://schoolsite.maps.arcgis.com"
   },
-  "timestamp": 1791958916285,
+  "timestamp": 1791973434678,
   "sharedThemeVariables": null,
   "mainLocale": "en-us",
   "dataSources": {
@@ -443,6 +438,13 @@
       "type": "WEB_MAP",
       "sourceLabel": "EquiZone",
       "itemId": "21f25962b7a648208329a5b7af506607",
+      "portalUrl": "https://schoolsite.maps.arcgis.com"
+    },
+    "dataSource_2": {
+      "id": "dataSource_2",
+      "type": "WEB_MAP",
+      "sourceLabel": "EquiZoneWebMap",
+      "itemId": "414d850ab1da4468ac7661567a71ae90",
       "portalUrl": "https://schoolsite.maps.arcgis.com"
     }
   },

@@ -2,11 +2,12 @@ import { React, getAppStore, observeStore, SessionManager, type AllWidgetProps }
 import { JimuMapViewComponent, type JimuMapView } from 'jimu-arcgis'
 import type FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import type { IMConfig } from '../config'
-import { resolveServiceUrl } from './PlanService'
+import { resolvePlanServiceSource, type PlanServiceSource } from './PlanService'
 import { RedistrictingPanel } from './RedistrictingPanel'
 import { AssignmentMapLoader } from './AssignmentMapLoader'
 import { isAuthenticated } from './authorization'
 import { getPortalAuthParams } from './auth-portal'
+import { errorDetails } from './error-details'
 
 const { useState, useEffect } = React
 
@@ -15,7 +16,8 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const [jimuMapView, setJimuMapView] = useState<JimuMapView>()
   const [activeMap, setActiveMap] = useState<__esri.Map | null>(null)
   const [baseLayer, setBaseLayer] = useState<FeatureLayer>()
-  const [serviceUrl, setServiceUrl] = useState<string>()
+  const [serviceUrl, setServiceUrl] = useState<PlanServiceSource>()
+  const [serviceResolutionError, setServiceResolutionError] = useState<string>()
   const [currentUser, setCurrentUser] = useState(() => getAppStore().getState().user)
   const [loginError, setLoginError] = useState<string>()
   const [loginPending, setLoginPending] = useState(false)
@@ -41,6 +43,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       setActiveMap(map)
       setBaseLayer(undefined)
       setServiceUrl(undefined)
+      setServiceResolutionError(undefined)
     }
     updateMap(jimuMapView.view.map ?? null)
     const handle = jimuMapView.view.watch('map', (map) => {
@@ -56,7 +59,17 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     const match = (titleHint
       ? featureLayers.find((l) => l.title === titleHint)
       : featureLayers.find((l: any) => l.geometryType === 'polygon')) as FeatureLayer | undefined
-    if (match) { setBaseLayer(match); setServiceUrl(resolveServiceUrl(match)) }
+    setBaseLayer(match)
+    setServiceUrl(undefined)
+    setServiceResolutionError(undefined)
+    if (match) {
+      try {
+        setServiceUrl(resolvePlanServiceSource(activeMap, match))
+      } catch (error) {
+        console.error('Scenario table discovery failed', error)
+        setServiceResolutionError(errorDetails(error))
+      }
+    }
   }, [activeMap, props.config.baseLayerTitle])
 
   const runAccountAction = React.useCallback((action: () => Promise<unknown>, failureMessage: string, setPending: (pending: boolean) => void) => {
@@ -77,7 +90,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     return request
       .catch((error) => {
         console.error(failureMessage, error)
-        setLoginError('Sign-in was not completed. Your current session is unchanged; try again when ready.')
+        setLoginError(`${failureMessage}: ${errorDetails(error)}`)
       })
       .finally(() => {
         accountActionInFlight.current = false
@@ -104,10 +117,9 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       setLoginError('ArcGIS sign-in needs an OAuth client ID. Add oauthClientId to this widget in the Experience app configuration, then redeploy.')
       return Promise.resolve()
     }
-    return runAccountAction(() => SessionManager.getInstance().signIn({
+    return runAccountAction(() => SessionManager.getInstance().switchAccount({
       ...authParams,
-      popup: true,
-      forceLogin: true
+      popup: true
     }), 'ArcGIS account switch was not completed', setSwitchPending)
   }, [props.config.authPortalUrl, props.config.oauthClientId, runAccountAction])
 
@@ -132,6 +144,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         if (!jmv) {
           setBaseLayer(undefined)
           setServiceUrl(undefined)
+          setServiceResolutionError(undefined)
         }
       }} />
     )}
@@ -143,6 +156,9 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     </div>}
     {!baseLayer && !overlayOnly && <div role="status" style={{ padding: 16 }}>
       {activeMap ? "Waiting for the map's base layer to load…" : 'Waiting for the map to reconnect…'}
+    </div>}
+    {serviceResolutionError && !overlayOnly && <div role="alert" style={{ padding: 12, color: '#b42318' }}>
+      Scenario tables could not be resolved from the map: {serviceResolutionError}
     </div>}
     {activeMap && baseLayer && serviceUrl && jimuMapView && (
       <>
