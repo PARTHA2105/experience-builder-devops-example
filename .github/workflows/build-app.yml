@@ -57,7 +57,7 @@ jobs:
         working-directory: exb/client
 
       - name: Run download script
-        run: node -e "require('./server/src/middlewares/dev/apps/app-download.js').zipApp('0', 'app.zip')"
+        run: node -e "const app=require('./server/public/apps/0/config.json'); if (!app.attributes || !app.attributes.clientId) throw new Error('Set attributes.clientId in apps/0/config.json'); require('./server/src/middlewares/dev/apps/app-download.js').zipApp('0', 'app.zip', app.attributes.clientId)"
         working-directory: exb
         env:
           NODE_ENV: production
@@ -67,6 +67,10 @@ jobs:
         run: |
           unzip -q app.zip -d app
           chmod -R 777 app
+        working-directory: exb
+
+      - name: Verify exported OAuth client configuration
+        run: node -e "const expected=require('./server/public/apps/0/config.json').attributes.clientId; const actual=require('./app/cdn/3/config.json').attributes.clientId; if (!expected || actual !== expected) throw new Error('Exported app OAuth client ID does not match apps/0/config.json'); console.log('Verified OAuth client ID:', actual)"
         working-directory: exb
 
       # Generate screenshot (optional)
