@@ -101,7 +101,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const signIn = React.useCallback(() => {
     const authParams = getPortalAuthParams(props.config.authPortalUrl, props.config.oauthClientId, getAppStore().getState())
     if (!authParams.clientId) {
-      setLoginError('ArcGIS sign-in needs an OAuth client ID. Add it to the app configuration for this portal or enter it in this widget’s OAuth client ID setting, then redeploy.')
+      setLoginError(`ArcGIS sign-in needs an OAuth client ID for ${authParams.desUrl ?? 'the configured portal'}. Add the public client ID to this widget’s settings, or to the app OAuth configuration when using the app’s portal, then republish.`)
       return Promise.resolve()
     }
     return runAccountAction(() => SessionManager.getInstance().signIn({
@@ -114,7 +114,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const switchAccount = React.useCallback(() => {
     const authParams = getPortalAuthParams(props.config.authPortalUrl, props.config.oauthClientId, getAppStore().getState())
     if (!authParams.clientId) {
-      setLoginError('ArcGIS sign-in needs an OAuth client ID. Add it to the app configuration for this portal or enter it in this widget’s OAuth client ID setting, then redeploy.')
+      setLoginError(`ArcGIS account switching needs an OAuth client ID for ${authParams.desUrl ?? 'the configured portal'}. Add the public client ID to this widget’s settings, or to the app OAuth configuration when using the app’s portal, then republish.`)
       return Promise.resolve()
     }
     return runAccountAction(() => SessionManager.getInstance().switchAccount({
@@ -124,9 +124,14 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   }, [props.config.authPortalUrl, props.config.oauthClientId, runAccountAction])
 
   const signOut = React.useCallback(() => {
+    const authParams = getPortalAuthParams(props.config.authPortalUrl, props.config.oauthClientId, getAppStore().getState())
+    if (!authParams.clientId) {
+      setLoginError(`ArcGIS sign-out needs the OAuth client ID for ${authParams.desUrl ?? 'the configured portal'}. Add it in this widget’s settings, then republish.`)
+      return Promise.resolve()
+    }
     return runAccountAction(() => {
       SessionManager.getInstance().signOut({
-        ...getPortalAuthParams(props.config.authPortalUrl, props.config.oauthClientId, getAppStore().getState()),
+        ...authParams,
         redirectToSignOutPage: false
       })
       return Promise.resolve()
