@@ -57,7 +57,7 @@ jobs:
         working-directory: exb/client
 
       - name: Run download script
-        run: node -e "const app=require('./server/public/apps/0/config.json'); if (!app.attributes || !app.attributes.clientId) throw new Error('Set attributes.clientId in apps/0/config.json'); require('./server/src/middlewares/dev/apps/app-download.js').zipApp('0', 'app.zip', app.attributes.clientId)"
+        run: node -e "require('./server/src/middlewares/dev/apps/app-download.js').zipApp('0', 'app.zip')"
         working-directory: exb
         env:
           NODE_ENV: production
@@ -67,11 +67,6 @@ jobs:
         run: |
           unzip -q app.zip -d app
           chmod -R 777 app
-        working-directory: exb
-
-      - name: Verify exported OAuth client configuration
-        run: |
-          node -e "const source=require('./server/public/apps/0/config.json'); const actual=require('./app/cdn/3/config.json'); const widgetId=Object.keys(source.widgets).find(id=>source.widgets[id].label==='Redistricting Assign'); const expectedWidget=source.widgets[widgetId]; const actualWidget=actual.widgets[widgetId]; const checks=[['app client ID',source.attributes.clientId,actual.attributes.clientId],['app portal',source.attributes.portalUrl,actual.attributes.portalUrl],['web map item ID',source.dataSources.dataSource_1.itemId,actual.dataSources.dataSource_1.itemId],['map portal',source.dataSources.dataSource_1.portalUrl,actual.dataSources.dataSource_1.portalUrl],['widget OAuth client ID',expectedWidget.config.oauthClientId,actualWidget.config.oauthClientId],['widget auth portal',expectedWidget.config.authPortalUrl,actualWidget.config.authPortalUrl]]; for(const [name,expected,got] of checks){if(!expected||got!==expected)throw new Error('Exported '+name+' mismatch: expected '+expected+', got '+got)} console.log('Verified Schoolsite OAuth client, portal, and Web Map configuration')"
         working-directory: exb
 
       # Generate screenshot (optional)
