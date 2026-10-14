@@ -68,6 +68,8 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config, onSign
   const [planActivity, setPlanActivity] = useState<PlanActivity[]>([])
   const [districts, setDistricts] = useState<PlanDistrict[]>([])
   const [totalBlockCount, setTotalBlockCount] = useState(0)
+  const [hoveredAccountControl, setHoveredAccountControl] = useState<'trigger' | 'switch' | 'signout'>()
+  const [focusedAccountControl, setFocusedAccountControl] = useState<'trigger' | 'switch' | 'signout'>()
 
   useEffect(() => {
     return observeStore(() => {
@@ -439,6 +441,10 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config, onSign
           aria-label={authenticated ? `Account menu for ${currentUserName}` : 'Sign in to ArcGIS'}
           aria-expanded={isAccountMenuOpen}
           aria-controls="redistricting-account-menu"
+          onMouseEnter={() => { setHoveredAccountControl('trigger') }}
+          onMouseLeave={() => { setHoveredAccountControl(undefined) }}
+          onFocus={() => { setFocusedAccountControl('trigger') }}
+          onBlur={() => { setFocusedAccountControl(undefined) }}
           onClick={() => {
             if (!authenticated) {
               void onSignIn()
@@ -446,7 +452,7 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config, onSign
             }
             setIsAccountMenuOpen((open) => !open)
           }}
-          style={{ display: 'grid', width: '100%', gridTemplateColumns: '38px minmax(0, 1fr) 20px', alignItems: 'center', columnGap: 10, padding: '11px 12px', border: `1px solid ${authenticated ? '#bbebce' : '#f1d6a8'}`, borderRadius: 9, background: authenticated ? 'linear-gradient(120deg, #f2fbf5 0%, #ffffff 100%)' : 'linear-gradient(120deg, #fff8ed 0%, #ffffff 100%)', boxShadow: '0 1px 3px rgba(16,24,40,0.06)', textAlign: 'left', cursor: 'pointer' }}
+          style={{ display: 'grid', width: '100%', gridTemplateColumns: '38px minmax(0, 1fr) 20px', alignItems: 'center', columnGap: 10, padding: '11px 12px', border: `1px solid ${authenticated ? '#bbebce' : '#f1d6a8'}`, borderRadius: 9, background: hoveredAccountControl === 'trigger' || focusedAccountControl === 'trigger' ? (authenticated ? '#e7f8ed' : '#fff0d9') : (authenticated ? 'linear-gradient(120deg, #f2fbf5 0%, #ffffff 100%)' : 'linear-gradient(120deg, #fff8ed 0%, #ffffff 100%)'), boxShadow: hoveredAccountControl === 'trigger' || focusedAccountControl === 'trigger' ? '0 4px 12px rgba(16,24,40,0.14)' : '0 1px 3px rgba(16,24,40,0.06)', outline: focusedAccountControl === 'trigger' ? '2px solid #2563eb' : undefined, outlineOffset: 2, transform: hoveredAccountControl === 'trigger' ? 'translateY(-1px)' : undefined, transition: 'background 140ms ease, box-shadow 140ms ease, transform 140ms ease', textAlign: 'left', cursor: 'pointer' }}
         >
           <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: authenticated ? '#dcfce7' : '#ffedd5', color: authenticated ? '#15803d' : '#c2410c', fontSize: 15, fontWeight: 700 }}>
             {authenticated ? currentUserName.charAt(0).toUpperCase() : '!'}
@@ -469,10 +475,10 @@ export function RedistrictingPanel({ view, baseLayer, serviceUrl, config, onSign
               <span style={{ display: 'block', marginTop: 4, color: '#15803d', fontSize: 10 }}>{isPlanner ? 'Administrator / reviewer' : 'Community member'}</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 10 }}>
-              <button type="button" disabled={isAccountActionPending} onClick={() => { void onSwitchAccount() }} style={{ minHeight: 36, border: 0, borderRadius: 5, background: '#0878bd', color: '#fff', fontSize: 11, fontWeight: 600, cursor: isAccountActionPending ? 'wait' : 'pointer' }}>
+              <button type="button" disabled={isAccountActionPending} onMouseEnter={() => { setHoveredAccountControl('switch') }} onMouseLeave={() => { setHoveredAccountControl(undefined) }} onFocus={() => { setFocusedAccountControl('switch') }} onBlur={() => { setFocusedAccountControl(undefined) }} onClick={() => { void onSwitchAccount() }} style={{ minHeight: 36, border: 0, borderRadius: 5, background: hoveredAccountControl === 'switch' || focusedAccountControl === 'switch' ? '#06649e' : '#0878bd', color: '#fff', fontSize: 11, fontWeight: 600, cursor: isAccountActionPending ? 'wait' : 'pointer', outline: focusedAccountControl === 'switch' ? '2px solid #2563eb' : undefined, outlineOffset: 2, boxShadow: hoveredAccountControl === 'switch' || focusedAccountControl === 'switch' ? '0 2px 7px rgba(8,120,189,0.3)' : undefined, transform: hoveredAccountControl === 'switch' ? 'translateY(-1px)' : undefined, transition: 'background 140ms ease, box-shadow 140ms ease, transform 140ms ease', opacity: isAccountActionPending ? 0.65 : 1 }}>
                 {isAccountActionPending ? 'Please wait…' : 'Switch account'}
               </button>
-              <button type="button" disabled={isAccountActionPending} onClick={() => { void onSignOut(); setIsAccountMenuOpen(false) }} style={{ minHeight: 36, border: '1px solid #cbd5e1', borderRadius: 5, background: '#fff', color: '#334155', fontSize: 11, fontWeight: 600, cursor: isAccountActionPending ? 'wait' : 'pointer' }}>
+              <button type="button" disabled={isAccountActionPending} onMouseEnter={() => { setHoveredAccountControl('signout') }} onMouseLeave={() => { setHoveredAccountControl(undefined) }} onFocus={() => { setFocusedAccountControl('signout') }} onBlur={() => { setFocusedAccountControl(undefined) }} onClick={() => { void onSignOut(); setIsAccountMenuOpen(false) }} style={{ minHeight: 36, border: `1px solid ${hoveredAccountControl === 'signout' || focusedAccountControl === 'signout' ? '#fca5a5' : '#cbd5e1'}`, borderRadius: 5, background: hoveredAccountControl === 'signout' || focusedAccountControl === 'signout' ? '#fff1f0' : '#fff', color: hoveredAccountControl === 'signout' || focusedAccountControl === 'signout' ? '#b42318' : '#334155', fontSize: 11, fontWeight: 600, cursor: isAccountActionPending ? 'wait' : 'pointer', outline: focusedAccountControl === 'signout' ? '2px solid #2563eb' : undefined, outlineOffset: 2, boxShadow: hoveredAccountControl === 'signout' || focusedAccountControl === 'signout' ? '0 2px 7px rgba(180,35,24,0.12)' : undefined, transform: hoveredAccountControl === 'signout' ? 'translateY(-1px)' : undefined, transition: 'background 140ms ease, box-shadow 140ms ease, transform 140ms ease', opacity: isAccountActionPending ? 0.65 : 1 }}>
                 Sign out
               </button>
             </div>
